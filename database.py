@@ -3,10 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-# Database URL (replace with your PostgreSQL credentials)
-#using NeonDB as an example
-#need another database
-DATABASE_URL = "postgresql://neondb_owner:npg_VhGXzeoJca62@ep-mute-feather-a1gm813w-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+# Local PostgreSQL database URL
+DATABASE_URL = "postgresql://postgres:123123@localhost:5432/myoral"
 
 # SQLAlchemy setup for ORM (sync only)
 engine = create_engine(DATABASE_URL)
