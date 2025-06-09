@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 # Local PostgreSQL database URL
+
 DATABASE_URL = "postgresql://postgres:123123@localhost:5432/myoral"
 
 # SQLAlchemy setup for ORM (sync only)
