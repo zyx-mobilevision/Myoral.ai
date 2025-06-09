@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-# Local PostgreSQL database URL
+# Local PostgreSQL database URL   
 
 DATABASE_URL = "postgresql://postgres:123123@localhost:5432/myoral"
 
