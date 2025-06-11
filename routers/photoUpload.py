@@ -13,7 +13,7 @@ from PIL import Image
 # No analysis imports needed for upload
 from database import (
     User, get_db,Photo,
-    insert_user, fetch_user_by_email, fetch_user_by_phone, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
+    insert_user, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

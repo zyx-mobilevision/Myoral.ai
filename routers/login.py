@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import (
     User, get_db,Photo,
-    insert_user, fetch_user_by_email, fetch_user_by_phone, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
+    insert_user, fetch_user_by_name, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
 )
 import uuid
 from datetime import datetime
@@ -11,12 +11,10 @@ from datetime import datetime
 
 class UserLogin(BaseModel):
     userId: str = ""
-    email: str = ""
-    phoneNumber: str = ""
+    username: str = ""
     password: str
 class UserLoginResponse(BaseModel):
     userId: str
-    usertype: str
     token: str
     message: str
 
@@ -27,10 +25,8 @@ def login_user(login: UserLogin, db: Session = Depends(get_db)):
     # Try to find user by userId, email, or phoneNumber
     if login.userId:
         user = fetch_user_by_id(login.userId, db)
-    elif login.email:
-        user = fetch_user_by_email(login.email, db)
-    elif login.phoneNumber:
-        user = fetch_user_by_phone(login.phoneNumber, db)
+    elif login.username:
+        user = fetch_user_by_name(login.username, db)
     # User not found
     if not user:
         raise HTTPException(
@@ -48,7 +44,6 @@ def login_user(login: UserLogin, db: Session = Depends(get_db)):
     update_user(user.userId, {"token": token, "lastUpdatedAt": datetime.utcnow()}, db)
     return UserLoginResponse(
         userId=user.userId,
-        usertype=user.usertype,
         token=token,
         message="Login successful"
     )

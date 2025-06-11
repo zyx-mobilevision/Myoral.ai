@@ -14,17 +14,12 @@ Base = declarative_base()
 
 # Define User model for PostgreSQL
 class User(Base):
-    __tablename__ = "users"
-
+    __tablename__ = "0611Users"
     userId = Column(String, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    phoneNumber = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, nullable=False)
     password = Column(String, nullable=False)  # Should be hashed in production
-    usertype = Column(String, nullable=False)
-    surname = Column(String, nullable=True)
-    givename = Column(String, nullable=True)
-    sex = Column(String, nullable=True)
-    birthYear = Column(Integer, nullable=True)
+    gender = Column(String, nullable=True)
+    ageGroup = Column(String, nullable=True)
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)
@@ -60,11 +55,8 @@ def insert_user(user_data: dict, db):
     return user
 
 #next step: try to combine the functions below?
-def fetch_user_by_email(email: str, db):
-    return db.query(User).filter(User.email == email).first()
-
-def fetch_user_by_phone(phone: str, db):
-    return db.query(User).filter(User.phoneNumber == phone).first()
+def fetch_user_by_name(name: str, db):
+    return db.query(User).filter(User.username == name).first()
 
 def fetch_user_by_id(user_id: str, db):
     return db.query(User).filter(User.userId == user_id).first()

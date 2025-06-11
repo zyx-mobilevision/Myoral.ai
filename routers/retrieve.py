@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import (
     User, get_db,Photo,
-    insert_user, fetch_user_by_email, fetch_user_by_phone, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
+    insert_user, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
 )
 import uuid
 from datetime import datetime
@@ -12,9 +12,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 class UserDetailResponse(BaseModel): # 这是获取用户信息的响应模型，无需输入数据模型
     userId: str
     fullName: str
-    email: str
-    phoneNumber: str
-    usertype: str
+    gender:str
+    ageGroup: str  
     createdAt: str
     lastUpdatedAt: str
 
@@ -55,16 +54,15 @@ def get_user_info(
     if current_user_id != userId and (not current_user or current_user.usertype != "reviewer"):
         raise HTTPException(status_code=403, detail="Not allowed to view other users' info")
     # Compose full name
-    full_name = f"{user.surname or ''} {user.givename or ''}".strip()
+    full_name = current_user.username
     # Use ISO format for createdAt/lastUpdatedAt, fallback to now if not present
     created_at = user.createdAt.isoformat() + "Z" if user.createdAt else datetime.utcnow().isoformat() + "Z"
     last_updated_at = user.lastUpdatedAt.isoformat() + "Z" if user.lastUpdatedAt else created_at
     return UserDetailResponse(
         userId=user.userId,
         fullName=full_name,
-        email=user.email,
-        phoneNumber=user.phoneNumber,
-        usertype=user.usertype,
+        gender=user.gender,
+        ageGroup=user.ageGroup,
         createdAt=created_at,
         lastUpdatedAt=last_updated_at
     )

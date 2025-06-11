@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import (
     User, get_db,Photo,
-    insert_user, fetch_user_by_email, fetch_user_by_phone, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
+    insert_user, fetch_user_by_name, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
 )
 import uuid
 from datetime import datetime
@@ -31,34 +31,28 @@ class UserRegistrationResponse(BaseModel):
 router = APIRouter()
 @router.post("/register", response_model=UserRegistrationResponse)  # Full path will be /v1/users/register
 def register_user(user: UserRegistration, db: Session = Depends(get_db)):
-    # Validate usertype
-    if user.usertype not in ["enduser", "reviewer"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid usertype. Must be 'enduser' or 'reviewer'"
-        )
+    # # Validate usertype
+    # if user.usertype not in ["enduser", "reviewer"]:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail="Invalid usertype. Must be 'enduser' or 'reviewer'"
+    #     )
     # Check for duplicate email
-    existing_user = fetch_user_by_email(user.email, db)
+    existing_user = fetch_user_by_name(user.username, db)
     if existing_user:
         raise HTTPException(
             status_code=409,
-            detail="Email already registered"
+            detail="Name already registered"
         )
-    # Check for duplicate phone
-    existing_phone = fetch_user_by_phone(user.phoneNumber, db)
-    if existing_phone:
-        raise HTTPException(
-            status_code=409,
-            detail="Phone number already registered"
-        )
+
     # Create user record
     user_id = str(uuid.uuid4())
     user_data = {
         "userId": user_id,
-        "email": user.email,
-        "phoneNumber": user.phoneNumber,
+        "username": user.username,
+        "gender": user.gender,
         "password": user.password,  # Should hash in production
-        "usertype": user.usertype,
+        "ageGroup": user.age_group,
         "createdAt": datetime.utcnow(),
         "lastUpdatedAt": datetime.utcnow(),
     }

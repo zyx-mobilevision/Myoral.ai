@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import (
     User, get_db,Photo,
-    insert_user, fetch_user_by_email, fetch_user_by_phone, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
+    insert_user, fetch_user_by_id, fetch_user_by_token, update_user, delete_user
 )
 import uuid
 from datetime import datetime
@@ -11,16 +11,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 
 class UpdateUserInfo(BaseModel): #这是更新时输入的核心数据，封装为class
-    surname: Optional[str] = None
-    givename: Optional[str] = None
-    sex: Optional[str] = None
-    birthYear: Optional[int] = None
+    username: Optional[str] = None
+    gender: Optional[str] = None
+    ageGroup: Optional[str] = None
 
 class UserInfoResponse(BaseModel):#这是完成put请求后返回的响应数据，也封装为class
-    surname: Optional[str]
-    givename: Optional[str]
-    sex: Optional[str]
-    birthYear: Optional[int]
+    username: Optional[str]
+    gender: Optional[str]
+    ageGroup: Optional[str]
     message: str
 
 # 辅助函数
@@ -56,11 +54,11 @@ def update_user_info(
             status_code=404,
             detail="User not found"
         )
-    # Validate sex
-    if update_data.sex and update_data.sex not in ["M", "F"]:
+    # Validate gender
+    if update_data.gender and update_data.gender not in ["M", "F"]:
         raise HTTPException(
             status_code=400,
-            detail="Invalid sex value. Accepted values: M, F"
+            detail="Invalid gender value. Accepted values: M, F"
         )
     # Prepare update fields
     update_fields = {k: v for k, v in update_data.dict().items() if v is not None}
@@ -70,8 +68,7 @@ def update_user_info(
     # Fetch updated user
     updated_user = fetch_user_by_id(userId, db)
     return UserInfoResponse(
-        surname=updated_user.surname,
-        givename=updated_user.givename,
-        sex=updated_user.sex,
-        birthYear=updated_user.birthYear,
+        username=updated_user.username,
+        gender=updated_user.gender,
+        ageGroup=updated_user.ageGroup,
         message="User information updated successfully")
