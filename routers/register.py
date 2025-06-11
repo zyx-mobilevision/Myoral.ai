@@ -29,7 +29,7 @@ class UserRegistrationResponse(BaseModel):
     message: str
 
 router = APIRouter()
-@router.post("/register", response_model=UserRegistrationResponse)
+@router.post("/register", response_model=UserRegistrationResponse)  # Full path will be /v1/users/register
 def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     # Validate usertype
     if user.usertype not in ["enduser", "reviewer"]:

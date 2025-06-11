@@ -21,7 +21,7 @@ class UserLoginResponse(BaseModel):
     message: str
 
 router = APIRouter()
-@router.post("/v1/users/login",  status_code=status.HTTP_200_OK)
+@router.post("/login",  status_code=status.HTTP_200_OK)  # Full path will be /v1/users/login
 def login_user(login: UserLogin, db: Session = Depends(get_db)):
     user = None
     # Try to find user by userId, email, or phoneNumber

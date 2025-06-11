@@ -37,7 +37,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), 
 
 router = APIRouter()
 
-@router.put("/v1/users/{userId}", status_code=status.HTTP_200_OK)
+@router.put("/{userId}", status_code=status.HTTP_200_OK)  # Full path will be /v1/users/{userId}
 def update_user_info(
     userId: str,
     update_data: UpdateUserInfo,
