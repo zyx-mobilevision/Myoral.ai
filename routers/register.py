@@ -21,6 +21,7 @@ class AgeGroup(str, Enum):
     TEEN = "13-19"      # teen
     ADULT = "20-59"     # adult
     SENIOR = "60+"      # senior
+    
 
 class UserRegistration(BaseModel):
     fullName: str
