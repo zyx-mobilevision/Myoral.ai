@@ -23,6 +23,7 @@ class AgeGroup(str, Enum):
     SENIOR = "60+"      # senior
     
 
+
 class UserRegistration(BaseModel):
     fullName: str
     email: str

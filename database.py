@@ -26,6 +26,7 @@ class User(Base):
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)
+    
 
 class Photo(Base):
     __tablename__ = 'photos_path'
