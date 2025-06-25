@@ -40,6 +40,7 @@ class User(Base):
     token = Column(String, nullable=True)
     confirmed = Column(Boolean, default=False)  # 新增：邮箱是否已确认
     confirmed_at = Column(DateTime, nullable=True)  # 新增：邮箱确认时间
+    register_method = Column(String, nullable=True)  # 新增：注册方式（email/sms）
 
 class Photo(Base):
     __tablename__ = 'photos_path'
