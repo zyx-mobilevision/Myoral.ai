@@ -2,3 +2,8 @@ __pycache__/
 myenv/
 WorkingFlow/
 uploads/
+masks/
+dataset/
+myoral_clean.zip/
+dataset.zip/
+
