@@ -7,12 +7,12 @@ Myoral is the backend for an AI-powered oral photo diagnosis app. Users can take
 ```
 Myoral/
 ├── routers/           # FastAPI routes (e.g., analyze.py, register.py, update.py)
-├── models/            # Trained model files (ignored by .gitignore)
+├── models/            # Trained model files 
 ├── Training/          # Dataset, training scripts, data splitting, visualization tools
-├── masks/             # Generated segmentation masks (ignored by .gitignore)
-├── uploads/           # Uploaded user images (ignored by .gitignore)
-├── dataset/           # Raw/processed datasets (ignored by .gitignore)
-├── myenv/             # Python virtual environment (ignored by .gitignore)
+├── masks/             # Generated segmentation masks
+├── uploads/           # Uploaded user images
+├── dataset/           # Raw/processed datasets 
+├── myenv/             # Python virtual environment
 ├── .gitignore
 ├── requirements.txt   # Python dependencies
 └── ...
