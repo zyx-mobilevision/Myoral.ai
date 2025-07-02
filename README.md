@@ -1,28 +1,77 @@
-# Myoral.ai
-Backend development
+# Myoral
 
-Oral AI Project
+Myoral is the backend for an AI-powered oral photo diagnosis app. Users can take oral photos via the app, and the backend uses deep learning models to segment and analyze the images, returning diagnostic results. This repository contains all backend code, including API routes, environment configuration, database design, and model training scripts.
 
-Oral AI is an innovative project focused on diagnosing oral health issues using AI technology. It includes user authentication, personal information collection, photo capture, validation, storage, diagnosis generation, and history management. Collaborate seamlessly using GitHub for efficient development and deployment.
+## Project Structure
 
-Tasks---API Endpoints:<br>
-User Registration<br>
-Login<br>
-Update User Information<br>
-Retrieve User Information<br>
-Upload Teeth Photos<br>
-Analyze Photos<br>
-List Mask Image Channel Values<br>
-Get Analysis History<br>
+```
+Myoral/
+├── routers/           # FastAPI routes (e.g., analyze.py, register.py, update.py)
+├── models/            # Trained model files (ignored by .gitignore)
+├── Training/          # Dataset, training scripts, data splitting, visualization tools
+├── masks/             # Generated segmentation masks (ignored by .gitignore)
+├── uploads/           # Uploaded user images (ignored by .gitignore)
+├── dataset/           # Raw/processed datasets (ignored by .gitignore)
+├── myenv/             # Python virtual environment (ignored by .gitignore)
+├── .gitignore
+├── requirements.txt   # Python dependencies
+└── ...
+```
 
-The structure of the backend dev is shown below:
-myoral_backend/<br>
-├── core/                  # 核心业务逻辑<br>
-├── api/                   # API 路由层<br>
-├── models/                # 数据模型<br>
-├── services/              # 服务层<br>
-├── utils/                 # 工具类 <br>
-├── db/                    # 数据库管理 <br>
-├── config.py               # 配置文件 <br>
-├── main.py                 # 应用入口 <br>
-└── requirements.txt        # 依赖库 <br>
+## Main Features
+
+- **User Management:** Registration, login, profile update, and avatar upload.
+- **Oral Photo Analysis:** Upload oral photos for AI-based segmentation and diagnosis (teeth, caries, gum, etc.).
+- **Model Training & Inference:** Integrated YOLOv8 segmentation model with custom training and inference support.
+- **Data Management:** Dataset splitting, mask visualization, and related utilities.
+
+## Getting Started
+
+1. **Environment Setup**
+
+   It is recommended to use Python 3.8+ and a virtual environment:
+
+   ```sh
+   python -m venv myenv
+   # On Windows:
+   myenv\Scripts\activate
+   # On macOS/Linux:
+   source myenv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Model Files**
+
+   Place your trained model files (e.g., `models/6_26best.pt`) in the `models/` directory.  
+   *Note: Model files are not included in the repository due to size limits.*
+
+3. **Start the Backend Server**
+
+   ```sh
+   uvicorn main:app --reload
+   ```
+
+4. **API Endpoints**
+
+   - `/v1/register` — User registration
+   - `/v1/analysis` — Upload and analyze oral photos
+   - `/v1/analysis/mask/{userid}` — Get segmentation mask results
+   - See the `routers/` directory for more endpoints and details
+
+## Training & Data
+
+- Training scripts and dataset utilities are in the `Training/` directory.
+- Supports custom dataset splitting and mask visualization.
+
+## Notes
+
+- Folders like `models/`, `masks/`, `uploads/`, and `dataset/` are ignored by `.gitignore` and not tracked by git.
+- Model files must be downloaded or trained separately.
+
+## Contribution
+
+Feel free to open issues or submit pull requests to help improve this project!
+
+---
+
+**This project is for research and educational purposes only. Commercial use is prohibited.**
