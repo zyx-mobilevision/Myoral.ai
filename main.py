@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import update, register, login, photoUpload, retrieve, readPhoto, analyze, reminder
+from routers import update, print,register, login, photoUpload, retrieve, readPhoto, analyze, reminder
 from fastapi.middleware.cors  import CORSMiddleware  # 导入中间件
 from fastapi.staticfiles import StaticFiles
 
@@ -21,6 +21,5 @@ app.include_router(retrieve.router, prefix="/v1")
 app.include_router(readPhoto.router, prefix="/v1")
 app.include_router(analyze.router, prefix="/v1")
 app.include_router(reminder.router, prefix="/v1")
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+app.include_router(print.router,prefix="/v1")
+
