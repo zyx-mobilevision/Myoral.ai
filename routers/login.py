@@ -33,6 +33,7 @@ router = APIRouter()
 def login_user(login: UserLogin, db: Session = Depends(get_db)):
     # 用email查找用户
     user = fetch_user_by_email(login.email, db)  # 假设fetch_user_by_name支持email查找
+    print(f"[DEBUG] login received userid: {user.userId}") 
     if not user:
         raise HTTPException(
             status_code=401,

@@ -35,6 +35,7 @@ class User(Base):
     password = Column(String, nullable=False)  # Stores hashed password
     gender = Column(String, nullable=True)
     ageGroup = Column(String, nullable=True)
+    appointDate = Column(String, nullable=True)  # 精确到小时的预约时间（如：2024-06-10 15:00）
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)
