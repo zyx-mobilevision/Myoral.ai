@@ -1,35 +1,38 @@
 # Myoral
 
-Myoral is the backend for an AI-powered oral photo diagnosis app. Users can take oral photos via the app, and the backend uses deep learning models to segment and analyze the images, returning diagnostic results. This repository contains all backend code, including API routes, environment configuration, database design, and model training scripts.
+Myoral is a deep learning-powered backend for intelligent oral photo analysis. Users upload oral images via the frontend app; the backend automatically performs tooth segmentation, caries (cavity) detection, gum recession analysis, and returns diagnostic images and detailed reports. The system supports user registration, login, profile management, photo uploads, and includes comprehensive model training and data processing tools.
 
 ## Project Structure
 
 ```
 Myoral/
-├── routers/           # FastAPI routes (e.g., analyze.py, register.py, update.py)
-├── models/            # Trained model files 
-├── Training/          # Dataset, training scripts, data splitting, visualization tools
+├── routers/           # FastAPI routes (user, analysis, upload, etc.)
+├── models/            # Trained model files (not included)
+├── Training/          # Training scripts, dataset splitting, mask visualization
 ├── masks/             # Generated segmentation masks
 ├── uploads/           # Uploaded user images
-├── dataset/           # Raw/processed datasets 
+├── users/             # User avatars and resources
+├── dataset/           # Raw/processed datasets (not included)
 ├── myenv/             # Python virtual environment
 ├── .gitignore
-├── requirements.txt   # Python dependencies
+├── requirements.txt
 └── ...
 ```
 
 ## Main Features
 
-- **User Management:** Registration, login, profile update, and avatar upload.
-- **Oral Photo Analysis:** Upload oral photos for AI-based segmentation and diagnosis (teeth, caries, gum, etc.).
-- **Model Training & Inference:** Integrated YOLOv8 segmentation model with custom training and inference support.
-- **Data Management:** Dataset splitting, mask visualization, and related utilities.
+- **User Management:** Registration (email/phone), login (JWT token), profile update, avatar upload, token authentication.
+- **Oral Photo Analysis:** Upload oral images for AI-based segmentation and diagnosis (teeth, caries, gum recession, etc.), with diagnostic images and structured reports.
+- **Model Inference:** Integrated YOLOv8 segmentation model, supports automatic GPU/CPU switching.
+- **Data Management:** Unified storage and management of photos, masks, user info.
+- **Training & Data Tools:** Custom dataset splitting, mask visualization, model training and fine-tuning.
+- **RESTful API:** CORS support, suitable for frontend-backend separation.
 
-## Getting Started
+## Quick Start
 
 1. **Environment Setup**
 
-   It is recommended to use Python 3.8+ and a virtual environment:
+   Python 3.8+ is recommended. Create a virtual environment:
 
    ```sh
    python -m venv myenv
@@ -40,38 +43,75 @@ Myoral/
    pip install -r requirements.txt
    ```
 
-2. **Model Files**
+2. **Configure Environment Variables**
 
-   Place your trained model files (e.g., `models/6_26best.pt`) in the `models/` directory.  
-   *Note: Model files are not included in the repository due to size limits.*
+   Copy `.env.example` to `.env` and fill in database, secret key, and other info.
 
-3. **Start the Backend Server**
+3. **Prepare Model Files**
+
+   Place your trained model files (e.g., `6_26best.pt`) in the `models/` directory.
+
+4. **Start the Backend Server**
 
    ```sh
    uvicorn main:app --reload
    ```
 
-4. **API Endpoints**
+5. **API Documentation**
 
-   - `/v1/register` — User registration
-   - `/v1/analysis` — Upload and analyze oral photos
-   - `/v1/analysis/mask/{userid}` — Get segmentation mask results
-   - See the `routers/` directory for more endpoints and details
+   Visit [http://localhost:8000/docs](http://localhost:8000/docs) in your browser for all endpoints and testing.
 
-## Training & Data
+## Core API Endpoints
 
-- Training scripts and dataset utilities are in the `Training/` directory.
-- Supports custom dataset splitting and mask visualization.
+All endpoints are prefixed with `/v1`:
 
-## Notes
+- `POST   /v1/register`         — User registration (email/phone)
+- `POST   /v1/login`            — User login, returns JWT token
+- `PUT    /v1/users/{userId}`   — Update user info
+- `GET    /v1/users/{userId}`   — Get user info
+- `POST   /v1/photoUpload`      — Upload oral photo
+- `GET    /v1/readPhoto/{photoId}` — Get original photo
+- `POST   /v1/analysis`         — Upload and analyze photo, returns diagnostic image and report
+- `GET    /v1/analysis/mask/{userId}` — Get segmentation mask (supports latest/all/specific time)
+- See the `routers/` directory and `/docs` for more
 
-- Folders like `models/`, `masks/`, `uploads/`, and `dataset/` are ignored by `.gitignore` and not tracked by git.
-- Model files must be downloaded or trained separately.
+## Oral Analysis & AI Diagnosis
+
+- Tooth instance segmentation with automatic numbering and annotation
+- Detection of caries (cavities), gum recession, and other oral issues
+- Outputs numbered mask images and structured JSON reports
+- Supports automatic PDF report generation
+
+## Database Design
+
+- Uses PostgreSQL and SQLAlchemy ORM
+- Includes user table (`Users`), photo table (`photos_path`), etc.
+- Supports email verification, token management, registration method distinction
+
+## Training & Data Tools
+
+- `train.py`: YOLOv8 segmentation model training script, supports custom hyperparameters
+- `split_dataset.py`: Automatic train/validation split
+- `visualize_mask.py`: Mask visualization for data inspection
+
+## Directory & File Notes
+
+- `models/`: All trained model files (must be downloaded/trained separately)
+- `masks/`: Segmentation mask images generated by analysis
+- `uploads/`: User-uploaded original photos
+- `users/`: User avatars and resources
+- `dataset/`: Raw/processed datasets (not distributed with code)
 
 ## Contribution
 
-Feel free to open issues or submit pull requests to help improve this project!
+Feel free to open issues or submit pull requests! For custom training, new features, or frontend integration, refer to the `routers/` and `Training/` directories.
+
+## Notes
+
+- This project is for academic and research use only. Commercial use is prohibited.
+- Model files and datasets must be prepared separately and are not included in the repository.
+- Keep your secret keys and database credentials secure.
 
 ---
 
-**This project is for research and educational purposes only. Commercial use is prohibited.**
+**Myoral — Intelligent Oral Analysis Backend for Better Oral Health Management**
