@@ -1,0 +1,28 @@
+# data.yaml
+path: Training/data
+train: ../Train.txt
+val: ../Val.txt
+# test: Test.txt  # 可选
+
+names:
+  0: Tooth
+  1: Caries
+  2: Gum Inflammation
+  3: Mouth
+  4: Gum
+  5: Recession
+  6: Orthodontics
+  7: Mucosa
+  8: Splint
+
+
+colors:
+  - [50, 183, 250]
+  - [241, 130, 231]
+  - [1, 62, 77]
+  - [255, 232, 177]
+  - [99, 30, 75]
+  - [109, 47, 239]
+  - [114, 205, 154]
+  - [243, 7, 231]
+  - [132, 78, 159]
