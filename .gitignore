@@ -1,4 +1,5 @@
 __pycache__/
+oralenv/
 myenv/
 WorkingFlow/
 uploads/
@@ -6,4 +7,9 @@ masks/
 dataset/
 *.zip
 models/
-
+users/
+.vscode/
+nohup.out/
+uvicorn.log/
+log.txt
+nohup.out/

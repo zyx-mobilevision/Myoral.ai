@@ -9,16 +9,17 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-# Database URL (replace with your PostgreSQL credentials)
-#using NeonDB as an example
-#need another database
-DATABASE_URL = "postgresql://neondb_owner:npg_VhGXzeoJca62@ep-still-brook-a1o2ku0m-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+ALGORITHM = os.getenv("ALGORITHM")# Hash algorithm for password
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASS")
+host = os.getenv("DB_HOST")
+port = os.getenv("DB_PORT")
+db = os.getenv("DB_NAME")
 
-# SQLAlchemy setup for ORM (sync only)
+DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db}"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -31,16 +32,22 @@ class User(Base):
     email = Column(String, nullable=False)
     phoneNumber = Column(String, nullable=False)
     fullName = Column(String, nullable=False)
-    birthdate = Column(String, nullable=False)  # Store as ISO format string
-    password = Column(String, nullable=False)  # Stores hashed password
+    birthdate = Column(String, nullable=False)  
+    password = Column(String, nullable=False)  
     gender = Column(String, nullable=True)
     ageGroup = Column(String, nullable=True)
+    appointDate = Column(String, nullable=True)  
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)
-    confirmed = Column(Boolean, default=False)  # 新增：邮箱是否已确认
-    confirmed_at = Column(DateTime, nullable=True)  # 新增：邮箱确认时间
-    register_method = Column(String, nullable=True)  # 新增：注册方式（email/sms）
+    confirmed = Column(Boolean, default=False)  
+    confirmed_at = Column(DateTime, nullable=True)  # confirm method of email
+    register_method = Column(String, nullable=True)  
+    resetToken = Column(String, nullable=True)  # token for reset
+    resetTokenCreatedAt = Column(DateTime, nullable=True)  #timestamp for the reset token
+    caries_number = Column(String, nullable=True)  
+    recession_number = Column(String, nullable=True)  
+    client_id = Column(String, nullable=False, default="0") 
 
 
 class Photo(Base):
@@ -49,14 +56,14 @@ class Photo(Base):
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String)
     image_type = Column(String)  # 'front', 'left', 'right'
-    image_data = Column(String)  # Store image as binary
+    image_data = Column(String)  # Store image
     timestamp = Column(String)
 
 
-# Create tables
+# Create 
 Base.metadata.create_all(bind=engine)
 
-# Dependency to get sync database session
+# Dependency to get database session
 def get_db():
     db = SessionLocal()
     try:
@@ -81,9 +88,6 @@ def fetch_user_by_id(user_id: str, db):
     return db.query(User).filter(User.userId == user_id).first()
 
 def fetch_user_by_token(token: str, db):
-    """
-    解码JWT token,获取userId,再查找用户。
-    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("userId")
@@ -129,6 +133,5 @@ def send_email(to_email, subject, body):
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.sendmail(from_email, to_email, msg.as_string())
-        print(f"[DEBUG] Email sent to {to_email} successfully.")
     except Exception as e:
         print(f"Failed to send email: {e}")
