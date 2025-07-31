@@ -11,24 +11,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 import os
 
-class UpdateUserInfo(BaseModel): #这是更新时输入的核心数据，封装为class
+class UpdateUserInfo(BaseModel):
     username: Optional[str] = None
     fullName: Optional[str] = None
     gender: Optional[str] = None
     ageGroup: Optional[str] = None
     birthdate: Optional[str] = None
     phoneNumber: Optional[str] = ""
+    appointDate: Optional[str] = None
 
-class UserInfoResponse(BaseModel):#这是完成put请求后返回的响应数据，也封装为class
+class UserInfoResponse(BaseModel):
     username: Optional[str]
     fullName: Optional[str]
     gender: Optional[str]
     ageGroup: Optional[str]
     birthdate: Optional[str]
     phoneNumber: Optional[str]
+    appointDate: Optional[str]
     message: str
 
-# 辅助函数
 security = HTTPBearer()
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
@@ -51,11 +52,11 @@ def update_user_info(
     ageGroup: Optional[str] = Form(None),
     birthdate: Optional[str] = Form(None),
     phoneNumber: Optional[str] = Form(""),
+    appointDate: Optional[str] = Form(None),
     photo: UploadFile = File(None),
     current_user_id: str = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    # Permission check
     if userId != current_user_id:
         raise HTTPException(
             status_code=403,
@@ -67,13 +68,11 @@ def update_user_info(
             status_code=404,
             detail="User not found"
         )
-    # Validate gender (允许 "M", "F", "O")
     if gender and gender not in ["M", "F", "O"]:
         raise HTTPException(
             status_code=400,
             detail="Invalid gender value. Accepted values: M, F, O"
         )
-    # Prepare update fields
     update_fields = {}
     if username is not None:
         update_fields["username"] = username
@@ -87,16 +86,16 @@ def update_user_info(
         update_fields["birthdate"] = birthdate
     if phoneNumber is not None:
         update_fields["phoneNumber"] = phoneNumber
+    if appointDate is not None:
+        update_fields["appointDate"] = appointDate
     if update_fields:
         update_fields["lastUpdatedAt"] = datetime.utcnow()
         update_user(userId, update_fields, db)
-    # 保存用户照片（如果有上传）
     if photo is not None:
         os.makedirs("users", exist_ok=True)
         photo_path = os.path.join("users", f"{userId}.jpg")
         with open(photo_path, "wb") as f:
             f.write(photo.file.read())
-    # Fetch updated user
     updated_user = fetch_user_by_id(userId, db)
     return UserInfoResponse(
         username=updated_user.username,
@@ -105,5 +104,6 @@ def update_user_info(
         ageGroup=updated_user.ageGroup,
         birthdate=updated_user.birthdate,
         phoneNumber=updated_user.phoneNumber,
+        appointDate=getattr(updated_user, "appointDate", None),
         message="User information updated successfully"
     )
