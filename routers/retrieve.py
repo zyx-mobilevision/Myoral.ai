@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-class UserDetailResponse(BaseModel): # 这是获取用户信息的响应模型，无需输入数据模型
+class UserDetailResponse(BaseModel):
     userId: str
     username: str
     email: str
@@ -22,7 +22,6 @@ class UserDetailResponse(BaseModel): # 这是获取用户信息的响应模型�
     lastUpdatedAt: str
 
 
-# 辅助函数
 security = HTTPBearer()
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
@@ -35,7 +34,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), 
     return user.userId
 
 
-# 获取用户信息
+# Get user info
 router = APIRouter()
 
 @router.get("/users/{userId}", response_model=UserDetailResponse, status_code=200)
@@ -44,22 +43,16 @@ def get_user_info(
     current_user_id: str = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    # Validate userId format (UUID)
     try:
         uuid.UUID(userId)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid userId format")
-    # Find user
     user = fetch_user_by_id(userId, db)
     if not user:
         raise HTTPException(status_code=404, detail="User with the specified userId does not exist.")
-    # Access control: allow self or reviewer
     current_user = fetch_user_by_id(current_user_id, db)
     if current_user_id != userId and (not current_user or current_user.usertype != "reviewer"):
         raise HTTPException(status_code=403, detail="Not allowed to view other users' info")
-    # Compose full name
-    full_name = user.fullName  # 修正为 user.fullName
-    # Use ISO format for createdAt/lastUpdatedAt, fallback to now if not present
     created_at = user.createdAt.isoformat() + "Z" if user.createdAt else datetime.utcnow().isoformat() + "Z"
     last_updated_at = user.lastUpdatedAt.isoformat() + "Z" if user.lastUpdatedAt else created_at
     return UserDetailResponse(

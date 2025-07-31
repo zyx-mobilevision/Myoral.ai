@@ -39,15 +39,14 @@ class ChangePasswordRequest(BaseModel):
 router = APIRouter()
 @router.post("/login",  status_code=status.HTTP_200_OK)
 def login_user(login: UserLogin, db: Session = Depends(get_db)):
-    # 用email查找用户
-    user = fetch_user_by_email(login.email, db)  # 假设fetch_user_by_name支持email查找
+    # Find user by email
+    user = fetch_user_by_email(login.email, db)
     print(f"[DEBUG] login received userid: {user.userId}") 
     if not user:
         raise HTTPException(
             status_code=401,
             detail="Unauthorized: User not found or email not registered"
         )
-   
     if not bcrypt.checkpw(login.password.encode('utf-8'), user.password.encode('utf-8')):
         raise HTTPException(
             status_code=401,
@@ -71,16 +70,16 @@ def change_password(data: ChangePasswordRequest, db: Session = Depends(get_db)):
     user = fetch_user_by_id(data.userId, db)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    # 校验旧密码
+    # Check old password
     if not bcrypt.checkpw(data.old_password.encode('utf-8'), user.password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Old password is incorrect")
-    # 更新新密码
+    # Update new password
     hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     update_user(user.userId, {"password": hashed_pw, "lastUpdatedAt": datetime.utcnow()}, db)
     return {"message": "Password changed successfully"}
 
 def send_reset_email(to_email, reset_url):
-    # 简单邮件发送（请根据实际环境配置SMTP服务器）
+    # Simple email sending (configure SMTP as needed)
     smtp_server = os.getenv("SMTP_SERVER", "smtp.example.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "your@email.com")
@@ -102,10 +101,10 @@ def reset_generate(userId: str, background_tasks: BackgroundTasks, db: Session =
     user = fetch_user_by_id(userId, db)
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="User not found or email not set")
-    # 生成重置token
+    # Generate reset token
     reset_token = str(uuid.uuid4())
     update_user(userId, {"resetToken": reset_token, "resetTokenCreatedAt": datetime.utcnow()}, db)
-    # 构造重置URL（前端应提供实际域名）
+    # Build reset URL (replace with actual frontend domain)
     reset_url = f"https://your-frontend-domain.com/reset-confirm?token={reset_token}"
     background_tasks.add_task(send_reset_email, user.email, reset_url)
     return {"message": "Reset token generated and email sent"}
@@ -119,7 +118,7 @@ def reset_confirm(data: ResetConfirmRequest, db: Session = Depends(get_db)):
     user = fetch_user_by_token(data.token, db)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
-    # 更新新密码
+    # Update new password
     hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     update_user(user.userId, {"password": hashed_pw, "resetToken": None, "lastUpdatedAt": datetime.utcnow()}, db)
     return {"message": "Password reset successfully"}

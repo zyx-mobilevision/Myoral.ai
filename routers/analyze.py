@@ -27,7 +27,6 @@ router = APIRouter()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"[DEBUG]  using device: {device}")
-# 加载YOLOv8模型（只加载一次），指定device
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'models', '6_30best_aug.pt')
 yolo_model = YOLO(MODEL_PATH)
 yolo_model.to(device)
@@ -36,25 +35,25 @@ yolo_model.to(device)
 @router.get("/analysis/mask/{userid}")
 async def get_mask_image(
     userid: str,
-    time: str = Query("latest", description="时间戳文件夹名，latest为最新，all为全部，none为按文件名"),
-    filename: str = Query("none", description="mask文件名，仅当time=none时使用")
+    time: str = Query("latest", description="get the corresponding file"),
+    filename: str = Query("none", description="only used when time is none")
 ):
     user_dir = os.path.join("masks", userid)
     if not os.path.exists(user_dir):
         raise HTTPException(status_code=404, detail="User mask folder not found")
-    # 获取所有时间戳文件夹
+    # Get all timestamp folders
     subfolders = [f for f in os.listdir(user_dir) if os.path.isdir(os.path.join(user_dir, f))]
     if not subfolders and time != "none":
         raise HTTPException(status_code=404, detail="No mask images found for user")
     if time == "latest":
-        # 取最新时间戳文件夹
+        # Use latest timestamp folder
         latest_folder = max(subfolders, key=lambda x: x)
         mask_path = os.path.join(user_dir, latest_folder, "mask.png")
         if not os.path.exists(mask_path):
             raise HTTPException(status_code=404, detail="Mask image not found")
         return FileResponse(mask_path, media_type="image/png")
     elif time == "all":
-        # 返回所有mask图片的文件路径
+        # Return all mask image paths
         mask_paths = []
         for folder in sorted(subfolders):
             mask_path = os.path.join(user_dir, folder, "mask.png")
@@ -64,7 +63,7 @@ async def get_mask_image(
             raise HTTPException(status_code=404, detail="No mask images found for user")
         return JSONResponse(content={"mask_paths": mask_paths})
     elif time == "none":
-        # 通过filename读取图片
+        # Read image by filename
         if not filename:
             raise HTTPException(status_code=400, detail="filename required when time=none")
         mask_path = os.path.join("masks", filename)
@@ -86,47 +85,35 @@ async def analyze_photos(
     image: UploadFile = File(..., description="Oral photo in JPEG/PNG format"),
     userId: str = Form("0", description="User ID")
 ):
-
-    # 动态选择 device
-    
-    print(f"[DEBUG] analyze_photos received userid: {userId}, using device: {device}")
     yolo_model.to(device)
 
-    # 仅校验图像格式
-    # if image.content_type not in ["image/jpeg", "image/png"]:
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail="Invalid image format. Only JPEG/PNG accepted"
-    #     )
+
     try:
         caries_history = None
         recession_history = None
         contents = await image.read()
         uploaded_img = Image.open(io.BytesIO(contents)).convert("RGB")
-        # 使用YOLOv8模型推理，获取mask
+        # Run YOLOv8 inference and get mask
         results = yolo_model(np.array(uploaded_img), device=device)
-        # 合并所有牙齿的mask为一张类别分割图
         mask = None
         if hasattr(results[0], "masks") and results[0].masks is not None:
-            masks = results[0].masks.data.cpu().numpy()  # (N, H, W)
-            # 获取每个mask对应的类别ID
+            masks = results[0].masks.data.cpu().numpy()
             if hasattr(results[0], "boxes") and hasattr(results[0].boxes, "cls"):
-                class_ids = results[0].boxes.cls.cpu().numpy().astype(np.uint8)  # (N,)
+                class_ids = results[0].boxes.cls.cpu().numpy().astype(np.uint8)
             else:
                 raise HTTPException(status_code=500, detail="Model did not return class ids")
             if masks.ndim == 3 and masks.shape[0] > 0 and masks.shape[0] == class_ids.shape[0]:
-                max_probs = masks.max(axis=0)  # (H, W)
-                mask_indices = masks.argmax(axis=0)  # (H, W), 取概率最大的mask索引
-                # 构建类别ID图，背景为0
+                max_probs = masks.max(axis=0)
+                mask_indices = masks.argmax(axis=0)
                 mask = np.zeros_like(max_probs, dtype=np.uint8)
                 for idx in range(masks.shape[0]):
-                    mask[mask_indices == idx] = class_ids[idx] + 1  # 类别ID+1，0为背景
-                mask[max_probs <= 0.5] = 0  # 阈值过滤，低于阈值为背景
+                    mask[mask_indices == idx] = class_ids[idx] + 1
+                mask[max_probs <= 0.5] = 0
             else:
                 raise HTTPException(status_code=500, detail="Model did not return valid masks or class ids")
         else:
             raise HTTPException(status_code=500, detail="Model did not return a mask")
-        # 类别英文标签
+        # Class labels
         class_labels = [
             "Background",    # 0
             "Tooth",         # 1
@@ -139,36 +126,16 @@ async def analyze_photos(
             "Mucosa",        # 8
             "Splint",        # 9
         ]
-        # 统计各类别像素点数量
         class_counts = {label: int((mask == idx).sum()) for idx, label in enumerate(class_labels)}
-        # 统计各类别目标数量（去除Background）
-        # 只保留需要统计的类别
         report_classes = [
             "Tooth", "Caries", "GumInflam", "Recession"
         ]
         class_object_counts = {label: int((class_ids == idx-1).sum()) for idx, label in enumerate(class_labels) if label in report_classes}
-        # 生成PDF报告，包含mask图片和颜色说明
+        # Generate PDF report with mask image and color legend
         def generate_pdf_report(object_counts, timestamp, mask_img, color_map, class_labels, user_info=None, caries_history=None, recession_history=None):
-            # 新增历史曲线页
-            
-            
-
             buf = io.BytesIO()
             c = canvas.Canvas(buf, pagesize=A4)
             width, height = A4
-
-            # 注册自定义字体（如有ttf文件可用）
-            # pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-
-            # 美化：顶部蓝色渐变背景+logo
-            # c.saveState()
-            # c.setFillColor(colors.HexColor("#E3F2FD"))
-            # c.rect(0, height-100, width, 100, fill=1, stroke=0)
-            # c.setFillColor(colors.HexColor("#42A5F5"))
-            # c.rect(0, height-100, width, 30, fill=1, stroke=0)
-            # c.restoreState()
-
-            # 顶部logo与信息
             logo_y = height - 60
             LIGHT_BLUE = "#42A5F5"
             c.setFont("Helvetica-Bold", 28)
@@ -178,17 +145,16 @@ async def analyze_photos(
             c.setFillColor(colors.HexColor("#555555"))
             c.drawCentredString(width / 2, logo_y - 16, "K11 Atelier, King's Road, Hong Kong")
 
-            # 分割线
             c.setStrokeColor(colors.HexColor("#B0B0B0"))
             c.setLineWidth(1.5)
             c.line(40, logo_y - 28, width - 40, logo_y - 28)
 
-            # 主标题
+            # title
             c.setFont("Helvetica-Bold", 24)
             c.setFillColor(colors.HexColor("#1976D2"))
             c.drawCentredString(width / 2, logo_y - 55, "Oral Health Report")
 
-            # 报告生成时间（中国时间），紧跟在主标题下且不加粗
+            # generate time
             y = logo_y - 75
             from datetime import datetime, timedelta
             c.setFont("Helvetica", 12)
@@ -201,7 +167,7 @@ async def analyze_photos(
             c.drawCentredString(width / 2, y, f"Report Generated At: {china_time.strftime('%Y-%m-%d %H:%M:%S')}")
             y -= 24
 
-            # Patient Info 区块美化
+            # Patient Info block
             c.saveState()
             c.setFillColor(colors.HexColor("#E3F2FD"))
             c.roundRect(40, y-80, width-60, 100, 10, fill=1, stroke=0)
@@ -248,23 +214,19 @@ async def analyze_photos(
                 c.drawString(60, y, "No patient info available.")
                 y -= 16
 
-            # 黄牙检测（只在tooth区域分析HSV）
-            # 牙齿区域mask
             tooth_mask = (np.array(mask_img.convert("RGB"))[..., :3])
             mask_np = np.array(mask_img.convert("RGB"))
             mask_id = np.array(mask)
             tooth_area = (mask_id == 1)
-            # 提取牙齿区域的像素
             tooth_pixels = mask_np[tooth_area]
-            # 转为HSV
             if tooth_pixels.size > 0:
                 tooth_pixels_hsv = cv2.cvtColor(tooth_pixels.reshape(-1, 1, 3), cv2.COLOR_RGB2HSV).reshape(-1, 3)
-                # 黄牙判定区间（H: 5~35）
+                # yellow teeth detection range（H: 5~35）
                 yellow_mask = ((tooth_pixels_hsv[:,0] >=5) & (tooth_pixels_hsv[:,0] <= 35))
                 yellow_ratio = yellow_mask.sum() / tooth_pixels_hsv.shape[0]
             else:
                 yellow_ratio = 0
-            # 亮度等级划分（1-5）
+            # Brightness level (1-5)
             # 0-10%: 1, 10-25%: 2, 25-45%: 3, 45-70%: 4, >70%: 5
             if yellow_ratio <= 0.10:
                 brightness_level = 1
@@ -277,14 +239,13 @@ async def analyze_photos(
             else:
                 brightness_level = 5
 
-            # 黄牙报告区块美化（左右排版，左：文字，右：亮度条带）
+            # Yellow teeth report block (left: text, right: bar)
             block_height = 60
             block_y = y-50
             c.saveState()
             c.setFillColor(colors.HexColor("#FFFDE7"))
             c.roundRect(40, block_y, width-60, block_height, 10, fill=1, stroke=0)
             c.restoreState()
-            # 左侧文字
             c.setFont("Helvetica-Bold", 14)
             c.setFillColor(colors.HexColor("#FBC02D"))
             c.drawString(50, y-10, "Tooth Whiteness Analysis")
@@ -300,21 +261,20 @@ async def analyze_photos(
                 c.drawString(60, text_y, "Recommendation: Consider professional cleaning.")
                 text_y -= 16
 
-            # 右侧亮度条带可视化
-            bar_x = width - 17 - 120  # 右侧边距80，条带宽120
+            # Right side brightness bar
+            bar_x = width - 17 - 120  
             bar_y = block_y + 12
             bar_width = 100
             bar_height = 20
-            # 绘制渐变条带（从白到黄）
+            # draw the band
             from reportlab.lib.colors import Color
             for i in range(bar_width):
-                # 渐变色：左白(255,255,255)到右黄(255,230,50)
                 r = 255
                 g = int(255 - (i/bar_width)*25)
                 b = int(255 - (i/bar_width)*205)
                 c.setFillColor(Color(r/255, g/255, b/255))
                 c.rect(bar_x + i, bar_y, 1, bar_height, fill=1, stroke=0)
-            # 绘制亮度等级分割线和数字
+            # draw the cutline
             for lvl in range(1,6):
                 pos = bar_x + int((lvl-1)*bar_width/4)
                 c.setStrokeColor(colors.HexColor("#B0B0B0"))
@@ -323,7 +283,6 @@ async def analyze_photos(
                 c.setFont("Helvetica", 10)
                 c.setFillColor(colors.black)
                 c.drawCentredString(pos, bar_y+bar_height+12, str(lvl))
-            # 用红色三角标记当前亮度等级
             marker_pos = bar_x + int((brightness_level-1)*bar_width/4)
             c.setFillColor(colors.red)
             c.setStrokeColor(colors.red)
@@ -336,7 +295,7 @@ async def analyze_photos(
             #c.drawCentredString(marker_pos, bar_y+bar_height+18, "⬆")
             y -= block_height
 
-            # Assessment 区块美化
+            # Assessment block
             # c.saveState()
             # c.setFillColor(colors.HexColor("#E3F2FD"))
             # c.roundRect(40, y-106, width-80, 90, 10, fill=1, stroke=0)
@@ -353,32 +312,29 @@ async def analyze_photos(
             gum_inflam = object_counts.get("GumInflam", 0)
             recession = object_counts.get("Recession", 0)
 
-            # 计算每个caries对应牙齿的面积比例及平均占比
+            # Calculate caries area ratio
             caries_ratios = []
             print("reached")
             if caries > 0 and hasattr(results[0], "masks") and results[0].masks is not None:
-                # 获取mask和class_ids
                 masks = results[0].masks.data.cpu().numpy()  # (N, H, W)
                 if hasattr(results[0], "boxes") and hasattr(results[0].boxes, "cls"):
                     class_ids = results[0].boxes.cls.cpu().numpy().astype(np.uint8)  # (N,)
                 else:
                     class_ids = None
-                # 遍历所有caries实例
                 for i in range(masks.shape[0]):
-                    if class_ids is not None and class_ids[i] == 1:  # 1: Caries
-                        # 找到该caries掩码
-                        caries_mask = (masks[i] > 0.5)
-                        # 找到与该caries掩码有重叠的tooth掩码
+                    if class_ids is not None and class_ids[i] == 1:  # find caries
+                        caries_mask = (masks[i] > 0.5)# set the bound
+                        #find overlap
                         max_overlap = 0
                         tooth_idx = -1
                         for j in range(masks.shape[0]):
-                            if class_ids[j] == 0:  # 0: Tooth
+                            if class_ids[j] == 0:  
                                 tooth_mask = (masks[j] > 0.5)
                                 overlap = np.logical_and(caries_mask, tooth_mask).sum()
                                 if overlap > max_overlap:
                                     max_overlap = overlap
                                     tooth_idx = j
-                        # 计算面积比例
+                        # ratio
                         caries_pixels = caries_mask.sum()
                         if tooth_idx >= 0:
                             tooth_mask = (masks[tooth_idx] > 0.5)
@@ -387,20 +343,19 @@ async def analyze_photos(
                             ratio = caries_pixels / total_pixels if total_pixels > 0 else 0
                             caries_ratios.append(ratio)
                         else:
-                            # 没找到对应牙齿，跳过
                             continue
                 avg_caries_ratio = np.mean(caries_ratios) if caries_ratios else 0
             else:
                 avg_caries_ratio = 0
 
-            # YOLO模型总结
+            # print summary
             summary_line = f"Detected: {tooth} teeth, {caries} caries, {gum_inflam} gum inflammation, {recession} gum recession."
-            wrap_width = width - 100  # 文字区域宽度
+            wrap_width = width - 100  
             for line in textwrap.wrap(summary_line, width=70):
                 c.drawString(60, y, line)
                 y -= 14
 
-            # Caries面积比例信息
+            # print ratio info
             if caries > 0 and caries_ratios:
                 for idx, ratio in enumerate(caries_ratios):
                     c.drawString(60, y, f"Caries {idx+1} area ratio: {ratio:.2%}")
@@ -445,31 +400,30 @@ async def analyze_photos(
 
             y -= 16
 
-            # 插入mask图片和legend（legend在图片右侧）
+            # Insert mask image and legend (right)
             c.setFont("Helvetica-Bold", 13)
-            c.setFillColor(colors.HexColor(LIGHT_BLUE))  # 浅蓝色
+            c.setFillColor(colors.HexColor(LIGHT_BLUE)) 
             c.drawString(50, y-10, "Segmentation Mask:")
             y -= 10
             img_buf = io.BytesIO()
             mask_img.save(img_buf, format="PNG")
             img_buf.seek(0)
             img_reader = ImageReader(img_buf)
-            # 布局参数
-            legend_width = 160  # legend区宽度
-            gap = 24  # 图片与legend间隔
-            max_total_width = width - 100  # 页面可用最大宽度
+            legend_width = 160  # legend width
+            gap = 24  
+            max_total_width = width - 100  # max width total
             max_img_width = max_total_width - legend_width - gap
             orig_width, orig_height = mask_img.size
-            # 预留下方空间
+            # reserved_height
             reserved_height = 150 
             max_img_height = y - reserved_height
             scale = min(max_img_width / orig_width, max_img_height / orig_height, 1.0)
             draw_width = orig_width * scale
             draw_height = orig_height * scale
             img_x = 50
-            img_y = y - draw_height - 10  # 下移10单位
+            img_y = y - draw_height - 10 
             c.drawImage(img_reader, img_x, img_y, width=draw_width, height=draw_height, mask='auto')
-            # legend区整体下移10单位
+            # move legend down by 10
             legend_x = img_x + draw_width + gap
             legend_y = y - 10
             c.setFont("Helvetica-Bold", 12)
@@ -477,7 +431,6 @@ async def analyze_photos(
             c.drawString(legend_x, legend_y, "Legend:")
             legend_y -= 22
             c.setFont("Helvetica", 11)
-            # 只渲染和标注 Tooth, Caries, GumInflam, Recession 四种类别，颜色与渲染一致
             legend_classes = ["Tooth", "Caries", "GumInflam", "Recession","Gum"]
             legend_indices = [class_labels.index(cls) for cls in legend_classes]
             for idx in legend_indices:
@@ -497,7 +450,7 @@ async def analyze_photos(
 
             y = img_y - 30
 
-            # 免责声明
+            # Disclaimer
             y-=50
             disclaimer = "Disclaimer: This report is generated by MyOral.ai using AI analysis. For a professional diagnosis, please consult a dentist."
             c.setFont("Helvetica-Oblique", 9)
@@ -517,7 +470,7 @@ async def analyze_photos(
                 c.drawString(50, y-42, line.strip())
                 y -= 12
 
-            # 页脚美化
+            # Footer
             c.setStrokeColor(colors.HexColor("#B0B0B0"))
             c.setLineWidth(1)
             c.line(40, 50, width - 40, 50)
@@ -527,22 +480,22 @@ async def analyze_photos(
             print(f"[DEBUG] Passing to PDF: caries_history={caries_history}, recession_history={recession_history}")
             if caries_history is not None and recession_history is not None:
                 c.showPage()
-                # 标题
+                # Title
                 c.setFont("Helvetica-Bold", 20)
                 c.setFillColor(colors.HexColor("#1976D2"))
                 c.drawCentredString(width/2, height-60, "Oral Health History")
 
-                # --- Caries Count Chart ---
+                # Caries Count Chart
                 c.setFont("Helvetica-Bold", 14)
                 c.setFillColor(colors.black)
                 caries_title_y = height-120
                 c.drawString(60, caries_title_y+15, "Caries Count")
-                # 下移所有图表和分析内容
-                block_offset = 75  # 稍微增大整体下移量，增大间距
+                # move down all the graphs
+                block_offset = 75  
                 chart_x = 60
-                chart_y = caries_title_y - 25 - block_offset  # 稍微增大caries title与图表间距
+                chart_y = caries_title_y - 25 - block_offset
                 chart_w = 320
-                chart_h = 110  # 压缩y轴高度
+                chart_h = 110  
                 c.setStrokeColor(colors.black)
                 c.setLineWidth(1)
                 c.rect(chart_x, chart_y, chart_w, chart_h, stroke=1, fill=0)
@@ -557,7 +510,7 @@ async def analyze_photos(
                     c.setStrokeColor(colors.HexColor("#CCCCCC"))
                     c.setLineWidth(0.5)
                     c.line(chart_x, y_pos, chart_x+chart_w, y_pos)
-                # x轴日期等距放缩
+                # data time for x-axis
                 if len(caries_items) > 1:
                     from datetime import datetime
                     date_fmt = "%Y-%m-%d"
@@ -574,7 +527,6 @@ async def analyze_photos(
                         c.rotate(90)
                         c.drawCentredString(0, 0, date_str)
                         c.restoreState()
-                    # 曲线
                     c.setStrokeColor(colors.HexColor("#4A90E2"))
                     c.setLineWidth(2)
                     points = [(x_positions[i], chart_y + (caries_vals[i]/max(1,max_caries))*chart_h) for i in range(len(caries_vals))]
@@ -595,7 +547,6 @@ async def analyze_photos(
                     y_val = chart_y + (caries_items[0][1]/max(1,max_caries))*chart_h
                     c.setStrokeColor(colors.HexColor("#4A90E2"))
                     c.circle(x_pos, y_val, 3, stroke=1, fill=1)
-                # 右侧平均值
                 c.setFont("Helvetica", 12)
                 c.setFillColor(colors.black)
                 caries_age_map = {
@@ -635,7 +586,7 @@ async def analyze_photos(
                 c.setFont("Helvetica-Oblique", 12)
                 c.setFillColor(colors.black)
                 c.drawString(analysis_x+112, analysis_y, avg_caries_val)
-                # 分析内容
+                # analyze
                 user_caries_str = "--"
                 percent_diff_str = "--"
                 if caries_vals and avg_caries_val not in ("--", "3.2"):
@@ -673,16 +624,15 @@ async def analyze_photos(
                 for idx, line in enumerate(wrap(percent_diff_str, width=22)):
                     c.drawString(analysis_x, analysis_y-18-idx*13, line)
 
-                # --- Recession Count Chart ---
+                # Recession Count Chart
                 c.setFont("Helvetica-Bold", 14)
                 c.setFillColor(colors.black)
-                # 下移recession相关内容
-                recession_title_y = chart_y - 55 - block_offset  # 稍微增大caries与recession间距
+                recession_title_y = chart_y - 55 - block_offset  # add offset
                 c.drawString(60, recession_title_y+6, "Gum Recession Count")
                 chart2_x = 60
-                chart2_y = recession_title_y - 110  # 稍微增大recession title与图表间距
+                chart2_y = recession_title_y - 110  # increase gap
                 chart2_w = 320
-                chart2_h = 110  # 压缩y轴高度
+                chart2_h = 110  
                 c.setStrokeColor(colors.black)
                 c.setLineWidth(1)
                 c.rect(chart2_x, chart2_y, chart2_w, chart2_h, stroke=1, fill=0)
@@ -733,7 +683,7 @@ async def analyze_photos(
                     y_val = chart2_y + (recession_items[0][1]/max(1,max_recession))*chart2_h
                     c.setStrokeColor(colors.HexColor("#4A90E2"))
                     c.circle(x_pos, y_val, 3, stroke=1, fill=1)
-                # 显示其他用户平均值
+                # show others' avg val
                 avg_recession_other = 1.2
                 avg_recession_user = "--"
                 if recession_vals:
@@ -744,7 +694,7 @@ async def analyze_photos(
                 c.setFont("Helvetica-Oblique", 12)
                 c.setFillColor(colors.black)
                 c.drawString(chart2_x+chart2_w+155, chart2_y+chart2_h-10, str(avg_recession_other))
-                # 分析内容：用户均值与总均值比较
+                # compare with others' avg
                 percent_diff_str = "--"
                 if avg_recession_user != "--":
                     try:
@@ -766,26 +716,25 @@ async def analyze_photos(
                 for idx, line in enumerate(wrap2(percent_diff_str, width=30)):
                     c.drawString(chart2_x+chart2_w+25, chart2_y+chart2_h-35-idx*13, line)
 
-                # --- GumInflam Score Chart (hard-coded, percent-based) ---
+                
                 c.setFont("Helvetica-Bold", 14)
                 c.setFillColor(colors.black)
-                gum_title_y = chart2_y - 55 - block_offset  # 稍微增大recession与gum inflamation间距
+                gum_title_y = chart2_y - 55 - block_offset  # add offset
                 c.drawString(60, gum_title_y+6, "Gum Inflamation Score")
                 chart3_x = 60
-                chart3_y = gum_title_y - 110  # 稍微增大gum inflamation title与图表间距
+                chart3_y = gum_title_y - 110  # increase gap
                 chart3_w = 320
                 chart3_h = 110
                 c.setStrokeColor(colors.black)
                 c.setLineWidth(1)
                 c.rect(chart3_x, chart3_y, chart3_w, chart3_h, stroke=1, fill=0)
-                # Hard-coded percent data (10 points)
+                # give 10 points for graph
                 gum_dates = [
                     "2025-06-15", "2025-06-22", "2025-06-29", "2025-07-06", "2025-07-13", "2025-07-20", "2025-07-22", "2025-07-25", "2025-07-27", "2025-07-29"
                 ]
-                gum_vals = [78, 82, 85, 80, 88, 90, 83, 87, 85, 84]  # 0-100分制
+                gum_vals = [78, 82, 85, 80, 88, 90, 83, 87, 85, 84]  
                 max_gum = 100
                 min_gum = 70
-                # y轴百分制
                 for i in range(min_gum, max_gum+1, 5):
                     y_pos = chart3_y + ((i-min_gum)/(max_gum-min_gum))*chart3_h
                     c.setFont("Helvetica", 9)
@@ -794,7 +743,6 @@ async def analyze_photos(
                     c.setStrokeColor(colors.HexColor("#CCCCCC"))
                     c.setLineWidth(0.5)
                     c.line(chart3_x, y_pos, chart3_x+chart3_w, y_pos)
-                # x轴日期等距放缩
                 from datetime import datetime
                 date_fmt = "%Y-%m-%d"
                 dates = [datetime.strptime(d, date_fmt) for d in gum_dates]
@@ -818,13 +766,13 @@ async def analyze_photos(
                 for pt in points:
                     c.circle(pt[0], pt[1], 3, stroke=1, fill=1)
 
-                # 右侧显示其他用户平均分
+                # show others' avg gum
                 avg_gum_user = int(round(sum(gum_vals)/len(gum_vals)))
                 avg_gum_other = 83
                 c.setFont("Helvetica", 12)
                 c.setFillColor(colors.black)
                 c.drawString(chart3_x+chart3_w+25, chart3_y+chart3_h-10, f"Avg Score (Others): {avg_gum_other}")
-                # 分析内容：用户均值与总均值比较
+                # compare with other
                 percent_diff_str = "--"
                 if avg_gum_user != "--":
                     try:
@@ -851,7 +799,7 @@ async def analyze_photos(
                 return buf
 
         h, w = mask.shape
-        # 只渲染 Tooth, Caries, GumInflam, Gum, Recession 五种类别，其余全部白色
+        # Only render Tooth, Caries, GumInflam, Gum, Recession; others white
         color_map = [
             (255, 255, 255),     # 0: Background (white)
             (255, 0, 0),         # 1: Tooth (bright red)
@@ -864,9 +812,8 @@ async def analyze_photos(
             (255, 128, 0),       # 8: Mucosa (orange)
             (0, 0, 0),           # 9: Splint (black)
         ]
-        render_alpha = 150  # 0-255, 越高越不透明
+        render_alpha = 150  # alpha
         color_mask = np.zeros((h, w, 4), dtype=np.uint8)
-        # 只渲染五种类别，其余全部白色
         render_classes = [1, 2, 3, 5, 6]
         for v in range(len(color_map)):
             color = color_map[v]
@@ -879,7 +826,7 @@ async def analyze_photos(
         color_mask_pil = Image.fromarray(color_mask, mode="RGBA")
         mask_np = np.array(mask)
 
-        # 画轮廓线（每种class都描边，统一用黑色，线宽2）
+        # Draw contour 
         contour_img = np.array(color_mask_pil).copy()
         for class_id in np.unique(mask_np):
             if (class_id == 0) or (class_id == 4):
@@ -888,15 +835,15 @@ async def analyze_photos(
             contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(contour_img, contours, -1, (0, 0, 0, 255), 2)
         contour_mask_pil = Image.fromarray(contour_img).convert("RGBA")
-        # 叠加到原图，增加透明度
+        # Overlay on original image, increase transparency
         original_img = uploaded_img.resize(contour_mask_pil.size).convert("RGBA")
         blended = Image.alpha_composite(original_img, color_mask_pil)
         blended = Image.alpha_composite(blended, contour_mask_pil)
         blended = blended.convert("RGB")
 
-        # 画每颗牙齿（每个实例）的轮廓线，背景(0)和嘴巴(4)不画
+        # Draw contour for each tooth instance
         contour_img = np.array(color_mask_pil).copy()
-        instance_alpha = 60  # 轮廓线透明度（0-255），可自定义
+        instance_alpha = 60  # transparency
         if hasattr(results[0], "masks") and results[0].masks is not None:
             masks = results[0].masks.data.cpu().numpy()  # (N, H, W)
             if hasattr(results[0], "boxes") and hasattr(results[0].boxes, "cls"):
@@ -905,14 +852,14 @@ async def analyze_photos(
                 class_ids = None
             for i in range(masks.shape[0]):
                 if class_ids is not None and (class_ids[i]+1 in [0, 4]):
-                    continue  # 跳过背景和嘴巴
+                    continue  
                 binary = (masks[i] > 0.5).astype(np.uint8) * 255
                 contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 cv2.drawContours(contour_img, contours, -1, (0, 0, 0, instance_alpha), 2)
         contour_mask_pil = Image.fromarray(contour_img).convert("RGBA")
-        # 叠加到原图，增加透明度
+        # Overlay on original image
         original_img = uploaded_img.resize(contour_mask_pil.size).convert("RGBA")
-        alpha_mask = 25  # 0-255, 80更透明
+        alpha_mask = 25 
         color_mask_pil.putalpha(alpha_mask)
         contour_mask_pil.putalpha(instance_alpha)
         blended = Image.alpha_composite(original_img, color_mask_pil)
@@ -922,7 +869,7 @@ async def analyze_photos(
         if userId == "0":
             buf = io.BytesIO()
             blended.save(buf, format="PNG")
-            # 生成PDF报告（无用户信息）
+        # Generate PDF report (no user info)
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             pdf_buf = generate_pdf_report(class_object_counts, timestamp, blended, color_map, class_labels)
             pdf_base64 = base64.b64encode(pdf_buf.read()).decode()
@@ -930,16 +877,16 @@ async def analyze_photos(
                 "X-Report-PDF-Base64": pdf_base64
             })
         else:
-            # 以时间戳为文件夹名
+            # use timestamp
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             user_mask_dir = os.path.join("masks", userId, datetime.utcnow().strftime("%Y%m%d%H%M%S"))
             os.makedirs(user_mask_dir, exist_ok=True)
             mask_path = os.path.join(user_mask_dir, "mask.png")
             blended.save(mask_path)
-            # 保存类别ID图（二维数组，npy格式）
+            # Save class id map
             mask_id_path = os.path.join(user_mask_dir, "mask_id.npy")
             np.save(mask_id_path, mask_np)
-            # 查找用户信息（通过数据库）
+            # user info
             user_info = None
             caries_history = None
             recession_history = None
@@ -956,7 +903,7 @@ async def analyze_photos(
                         "Email": user_obj.email,
                         "Phone": user_obj.phoneNumber
                     }
-                    # 历史 caries_number 和 recession_number 以日期为key的dict
+                    # Historical caries_number and recession_number as dict by date
                     caries_dict = {}
                     recession_dict = {}
                     if user_obj.caries_number:
@@ -969,13 +916,12 @@ async def analyze_photos(
                             recession_dict = json.loads(user_obj.recession_number)
                         except Exception:
                             recession_dict = {}
-                    # 追加本次分析结果
+                    # Append current analysis result
                     caries = class_object_counts.get("Caries", 0)
                     recession = class_object_counts.get("Recession", 0)
                     today_str = datetime.utcnow().strftime("%Y-%m-%d")
                     caries_dict[today_str] = caries
                     recession_dict[today_str] = recession
-                    # 限制历史长度（如只保留最近20次）
                     def trim_dict(d, max_len=20):
                         items = sorted(d.items(), key=lambda x: x[0])
                         if len(items) > max_len:
@@ -983,7 +929,7 @@ async def analyze_photos(
                         return dict(items)
                     caries_dict = trim_dict(caries_dict)
                     recession_dict = trim_dict(recession_dict)
-                    # 更新数据库
+                    # Update user info
                     update_user(userId, {
                         "caries_number": json.dumps(caries_dict, ensure_ascii=False),
                         "recession_number": json.dumps(recession_dict, ensure_ascii=False)
@@ -998,13 +944,11 @@ async def analyze_photos(
                 user_info = None
                 caries_history = None
                 recession_history = None
-            # 生成PDF报告
-            print(f"[DEBUG] Before Passing to PDF: caries_history={caries_history}, recession_history={recession_history}")
             pdf_buf = generate_pdf_report(class_object_counts, timestamp, blended, color_map, class_labels, user_info,caries_history,recession_history)
             pdf_path = os.path.join(user_mask_dir, "report.pdf")
             with open(pdf_path, "wb") as f:
                 f.write(pdf_buf.read())
-            # 返回的文件名使用同一个timestamp
+            # return pathes
             return {
                 "results": {
                     "maskFileName": f"{userId}/{os.path.basename(user_mask_dir)}/mask.png",
@@ -1038,11 +982,6 @@ async def get_mask_id_array(
 
 @router.get("/analysis/report/pdf")
 async def get_pdf_report(pdf_path: str):
-    """
-    读取指定路径的PDF报告并返回,支持客户端下载。
-    :param pdf_path: PDF文件的相对或绝对路径
-    :return: FileResponse
-    """
     pdf_path=os.path.join('masks',pdf_path)
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF report not found")

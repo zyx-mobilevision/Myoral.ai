@@ -20,17 +20,17 @@ ALGORITHM = os.getenv("ALGORITHM")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SERVICE_SID = os.getenv("TWILIO_VERIFY_SERVICE_SID")
-# 用户注册相关的API
+
 class Gender(str, Enum):
     MALE = "M"
     FEMALE = "F"
     OTHER = "O"
 
 class AgeGroup(str, Enum):
-    Child = "6-12"  # 儿童
-    Teen = "13-19"    # 成人
+    Child = "6-12" 
+    Teen = "13-19"    
     Adult= "20-59"
-    Senior = "60+"  # 老年人
+    Senior = "60+"  
     
 class UserRegistration(BaseModel):
     gender: Gender = None
@@ -42,9 +42,8 @@ class UserRegistration(BaseModel):
     fullName: str = None
     birthdate: str = None
     register_method: str = "email"
-    client_id: str = "0"  # 新增字段，默认为0
+    client_id: str = "0"  
     
-#响应模型
 class UserRegistrationResponse(BaseModel):
     userId: str
     message: str
@@ -69,23 +68,23 @@ def format_hk_phone_number(phone: str) -> str:
 router = APIRouter()
 @router.post("/register", response_model=UserRegistrationResponse)
 def register_user(user: UserRegistration, request: Request, db: Session = Depends(get_db)):
-    # 只检查邮箱唯一性
+    # 
     # if db.query(User).filter(User.email == user.email).first():
     #     raise HTTPException(
     #         status_code=409,
     #         detail="Email already registered"
     #     )
-    # 电话非空时检查唯一性
+    # 
     # if user.phoneNumber!='' and db.query(User).filter(User.phoneNumber == user.phoneNumber).first():
     #     raise HTTPException(
     #         status_code=409,
     #         detail="Phone number already registered"
     #     )
-    # 密码加密
+   
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     # Create user record
     user_id = str(uuid.uuid4())
-    # user.phoneNumber = format_hk_phone_number(user.phoneNumber)
+    
     user_data ={
         "userId":user_id,
         "username": user.username,
@@ -94,17 +93,16 @@ def register_user(user: UserRegistration, request: Request, db: Session = Depend
         "phoneNumber": user.phoneNumber,
         "fullName": user.fullName,
         "birthdate": user.birthdate, 
-        "password": hashed_password,  # 存储加密后的密码
+        "password": hashed_password,  
         "ageGroup": user.age_group,
         "createdAt": datetime.utcnow(),
         "lastUpdatedAt": datetime.utcnow(),
         "register_method": user.register_method,
         "confirmed": True,
         "confirmed_at": None,
-        #"client_id": user.client_id if hasattr(user, 'client_id') else "0"
+        "client_id": user.client_id if hasattr(user, 'client_id') else "0"
     }
     insert_user(user_data, db)
-    # 注释掉邮箱/短信验证及相关返回
     # if user.register_method == "email":
     #     confirm_token = jwt.encode({"userId": user_id, "exp": datetime.utcnow() + timedelta(hours=24)}, SECRET_KEY, algorithm=ALGORITHM)
     #     base_url = str(request.base_url).rstrip('/')
@@ -119,7 +117,7 @@ def register_user(user: UserRegistration, request: Request, db: Session = Depend
     #     raise HTTPException(status_code=400, detail="register_method must be 'email' or 'sms'.")
     return UserRegistrationResponse(userId=user_id, message="Account created.")
 
-# @router.get("/register/confirm/{token}") #用户登录时验证邮箱是否正确有效
+# @router.get("/register/confirm/{token}") 
 # def confirm_email(token: str, db: Session = Depends(get_db)):
 #     try:
 #         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -138,7 +136,6 @@ def register_user(user: UserRegistration, request: Request, db: Session = Depend
 def reset_password_request(data: PasswordResetRequest, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
-        # 为安全不暴露邮箱是否存在
         return {"message": "If this email is registered, a reset link has been sent."}
     reset_token = jwt.encode({"userId": user.userId, "exp": datetime.utcnow() + timedelta(hours=1)}, SECRET_KEY, algorithm=ALGORITHM)
     base_url = str(request.base_url).rstrip('/')
@@ -156,7 +153,7 @@ def reset_password(data: PasswordReset, db: Session = Depends(get_db)):
         user = fetch_user_by_id(user_id, db)
         if not user:
             raise HTTPException(status_code=400, detail="Invalid or expired token.")
-        # 密码哈希加密存储
+        # hash to store password 
         hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         update_user(user_id, {"password": hashed_pw, "lastUpdatedAt": datetime.utcnow()}, db)
         return {"message": "Password reset successful."}

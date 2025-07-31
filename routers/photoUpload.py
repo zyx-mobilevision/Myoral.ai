@@ -25,11 +25,12 @@ class PhotoMetadata(BaseModel):
     appVersion: Optional[str] = None
 
 class PhotoUploadResponse(BaseModel):
-    photoID: List[str]  # List of photo IDs
+    photoID: List[str]  
     photoUrls: dict
     captureTimestamp: str
     message: str
-#辅助函数
+
+
 security = HTTPBearer()
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
@@ -42,26 +43,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security), 
     return user.userId
 def validate_image(file: UploadFile) -> bool:
     try:
-        # Read image to verify format and dimensions
         img = Image.open(file.file)
-        # width, height = img.size
-        file.file.seek(0)  # Reset file pointer
-        
-        # Check dimensions
-        # if width < 1000 or height < 1000:
-        #     return False
-            
-        # Check format
+        file.file.seek(0)
         if img.format.lower() not in ['jpeg', 'png']:
             return False
-            
-        # Check file size (10MB)
-        # file.file.seek(0, 2)  # Seek to end
-        # size = file.file.tell()
-        # file.file.seek(0)  # Reset pointer
-        # if size > 10 * 1024 * 1024:
-        #     return False
-            
         return True
     except Exception:
         return False
@@ -78,62 +63,45 @@ async def upload_photos(
     current_user_id: str = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    # Permission check
     if userId != current_user_id:
         raise HTTPException(status_code=403, detail="Not allowed to upload photos for other users")
-
-    # Validate timestamp format
     try:
         capture_time = datetime.fromisoformat(captureTimestamp.replace('Z', '+00:00'))
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid timestamp format. Use ISO 8601 format (e.g., 2025-04-16T12:30:00Z)")
-
-    # Validate metadata if provided
     if metadata:
         try:
             metadata_dict = json.loads(metadata)
             PhotoMetadata(**metadata_dict)
         except (json.JSONDecodeError, ValueError):
             raise HTTPException(status_code=400, detail="Invalid metadata format")
-
-    # Validate images
     photos = {"front": front, "left": left, "right": right}
     for name, photo in photos.items():
         if not validate_image(photo):
-            raise HTTPException(status_code=400, detail=f"Invalid {name} image. Must be JPG/PNG")  # 修改提示信息
-
-   # 保存图像到文件系统
+            raise HTTPException(status_code=400, detail=f"Invalid {name} image. Must be JPG/PNG")
+    # Save images to file system
     photo_paths = {}
-    upload_dir = f"uploads/{userId}/{capture_time.isoformat().replace(':', '-')}"  # 使用时间戳创建唯一目录
-#但是要注意，这样的目录名可能会有问题，因为文件系统不允许某些字符，比如冒号(:)，所以我们用'-'替换它们
-#而且注意，这个目录是本地的，最终是服务器对应的文件系统路径，所以之后需要转换为可访问路径
-    # 创建目录
+    upload_dir = f"uploads/{userId}/{capture_time.isoformat().replace(':', '-')}"
     os.makedirs(upload_dir, exist_ok=True)
-    #common_id= str(uuid.uuid4())  # 生成一个通用ID用于所有照片,ERROR!
-    photos = {"front": front, "left": left, "right": right}
-    photo_ids = []  # 用于存储所有照片的ID
+    photo_ids = []
     for photo_type, photo in photos.items():
-        file_path = os.path.join(upload_dir, f"{photo_type}.jpg")  # 或者使用合适的文件扩展名
+        file_path = os.path.join(upload_dir, f"{photo_type}.jpg")
         with open(file_path, "wb") as img_file:
-            img_file.write(await photo.read())  # 保存图像数据
-
-        # 存储文件路径
+            img_file.write(await photo.read())
         photo_paths[photo_type] = file_path
-        
         db_photo = Photo(
-            id=str(uuid.uuid4()),  # 生成唯一ID
+            id=str(uuid.uuid4()),
             user_id=userId,
             image_type=photo_type,
-            image_data=photo_paths[photo_type],  # 存储路径而不是二进制数据
+            image_data=photo_paths[photo_type],
             timestamp=capture_time.isoformat()
         )
-        photo_ids.append(db_photo.id)  # 添加到ID列表
+        photo_ids.append(db_photo.id)
         db.add(db_photo)
-
     db.commit()
     return PhotoUploadResponse(
-    photoID=photo_ids,
-    photoUrls=photo_paths,
-    captureTimestamp=capture_time.isoformat(),  # 包含时间戳
-    message="Photos uploaded successfully"
-)
+        photoID=photo_ids,
+        photoUrls=photo_paths,
+        captureTimestamp=capture_time.isoformat(),
+        message="Photos uploaded successfully"
+    )

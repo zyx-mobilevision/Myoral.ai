@@ -1,18 +1,18 @@
 from fastapi import FastAPI
 from routers import update, print,register, login, photoUpload, retrieve, readPhoto, analyze, reminder
-from fastapi.middleware.cors  import CORSMiddleware  # 导入中间件
+from fastapi.middleware.cors  import CORSMiddleware  # Middleware import
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.add_middleware( 
     CORSMiddleware,
-    allow_origins=["*"],  # 前端地址 
-    allow_methods=["*"],                      # 允许所有 HTTP 方法 
-    allow_headers=["*"],                      # 允许所有请求头
+    allow_origins=["*"],  # Allow all origins
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
  
-# Include routers
+# Register routers
 app.include_router(register.router, prefix="/v1")
 app.include_router(login.router, prefix="/v1")
 app.include_router(update.router, prefix="/v1")
