@@ -26,7 +26,6 @@ import os
 router = APIRouter()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"[DEBUG]  using device: {device}")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'models', '6_30best_aug.pt')
 yolo_model = YOLO(MODEL_PATH)
 yolo_model.to(device)
@@ -110,9 +109,9 @@ async def analyze_photos(
                     mask[mask_indices == idx] = class_ids[idx] + 1
                 mask[max_probs <= 0.5] = 0
             else:
-                raise HTTPException(status_code=500, detail="Model did not return valid masks or class ids")
+                raise HTTPException(status_code=500, detail="status 500")
         else:
-            raise HTTPException(status_code=500, detail="Model did not return a mask")
+            raise HTTPException(status_code=500, detail="error")
         # Class labels
         class_labels = [
             "Background",    # 0
@@ -221,12 +220,11 @@ async def analyze_photos(
             tooth_pixels = mask_np[tooth_area]
             if tooth_pixels.size > 0:
                 tooth_pixels_hsv = cv2.cvtColor(tooth_pixels.reshape(-1, 1, 3), cv2.COLOR_RGB2HSV).reshape(-1, 3)
-                # yellow teeth detection range（H: 5~35）
+                # yellow teeth detection
                 yellow_mask = ((tooth_pixels_hsv[:,0] >=5) & (tooth_pixels_hsv[:,0] <= 35))
                 yellow_ratio = yellow_mask.sum() / tooth_pixels_hsv.shape[0]
             else:
                 yellow_ratio = 0
-            # Brightness level (1-5)
             # 0-10%: 1, 10-25%: 2, 25-45%: 3, 45-70%: 4, >70%: 5
             if yellow_ratio <= 0.10:
                 brightness_level = 1
@@ -261,7 +259,7 @@ async def analyze_photos(
                 c.drawString(60, text_y, "Recommendation: Consider professional cleaning.")
                 text_y -= 16
 
-            # Right side brightness bar
+            # Right side bar
             bar_x = width - 17 - 120  
             bar_y = block_y + 12
             bar_width = 100
@@ -323,7 +321,7 @@ async def analyze_photos(
                     class_ids = None
                 for i in range(masks.shape[0]):
                     if class_ids is not None and class_ids[i] == 1:  # find caries
-                        caries_mask = (masks[i] > 0.5)# set the bound
+                        caries_mask = (masks[i] > 0.5)# caries_mask
                         #find overlap
                         max_overlap = 0
                         tooth_idx = -1
@@ -343,7 +341,7 @@ async def analyze_photos(
                             ratio = caries_pixels / total_pixels if total_pixels > 0 else 0
                             caries_ratios.append(ratio)
                         else:
-                            continue
+                            continue #no toothidx
                 avg_caries_ratio = np.mean(caries_ratios) if caries_ratios else 0
             else:
                 avg_caries_ratio = 0
@@ -799,18 +797,18 @@ async def analyze_photos(
                 return buf
 
         h, w = mask.shape
-        # Only render Tooth, Caries, GumInflam, Gum, Recession; others white
+        # Only render diceases; others white
         color_map = [
-            (255, 255, 255),     # 0: Background (white)
-            (255, 0, 0),         # 1: Tooth (bright red)
-            (0, 255, 0),         # 2: Caries (bright green)
-            (255, 255, 0),       # 3: GumInflam (bright yellow)
-            (255, 255, 255),     # 4: Mouth (white, not rendered)
-            (0, 0, 255),         # 5: Gum (blue)
-            (255, 0, 255),       # 6: Recession (magenta)
-            (0, 255, 255),       # 7: Ortho (cyan)
-            (255, 128, 0),       # 8: Mucosa (orange)
-            (0, 0, 0),           # 9: Splint (black)
+            (255, 255, 255),     # 0: white
+            (255, 0, 0),         # 1: bright red
+            (0, 255, 0),         # 2: bright blue
+            (255, 255, 0),       # 3: bright yellow
+            (255, 255, 255),     # 4: white
+            (0, 0, 255),         # 5: blue
+            (255, 0, 255),       # 6: magenta
+            (0, 255, 255),       # 7: cyan
+            (255, 128, 0),       # 8: orange
+            (0, 0, 0),           # 9: black
         ]
         render_alpha = 150  # alpha
         color_mask = np.zeros((h, w, 4), dtype=np.uint8)
@@ -835,13 +833,12 @@ async def analyze_photos(
             contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(contour_img, contours, -1, (0, 0, 0, 255), 2)
         contour_mask_pil = Image.fromarray(contour_img).convert("RGBA")
-        # Overlay on original image, increase transparency
         original_img = uploaded_img.resize(contour_mask_pil.size).convert("RGBA")
         blended = Image.alpha_composite(original_img, color_mask_pil)
         blended = Image.alpha_composite(blended, contour_mask_pil)
         blended = blended.convert("RGB")
 
-        # Draw contour for each tooth instance
+        # Draw contour
         contour_img = np.array(color_mask_pil).copy()
         instance_alpha = 60  # transparency
         if hasattr(results[0], "masks") and results[0].masks is not None:
@@ -865,11 +862,10 @@ async def analyze_photos(
         blended = Image.alpha_composite(original_img, color_mask_pil)
         blended = Image.alpha_composite(blended, contour_mask_pil)
         blended = blended.convert("RGB")
-
+        #guest mode
         if userId == "0":
             buf = io.BytesIO()
             blended.save(buf, format="PNG")
-        # Generate PDF report (no user info)
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             pdf_buf = generate_pdf_report(class_object_counts, timestamp, blended, color_map, class_labels)
             pdf_base64 = base64.b64encode(pdf_buf.read()).decode()
@@ -883,7 +879,7 @@ async def analyze_photos(
             os.makedirs(user_mask_dir, exist_ok=True)
             mask_path = os.path.join(user_mask_dir, "mask.png")
             blended.save(mask_path)
-            # Save class id map
+            # create path for id
             mask_id_path = os.path.join(user_mask_dir, "mask_id.npy")
             np.save(mask_id_path, mask_np)
             # user info

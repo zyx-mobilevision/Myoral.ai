@@ -39,9 +39,7 @@ class ChangePasswordRequest(BaseModel):
 router = APIRouter()
 @router.post("/login",  status_code=status.HTTP_200_OK)
 def login_user(login: UserLogin, db: Session = Depends(get_db)):
-    # Find user by email
     user = fetch_user_by_email(login.email, db)
-    print(f"[DEBUG] login received userid: {user.userId}") 
     if not user:
         raise HTTPException(
             status_code=401,
@@ -52,7 +50,7 @@ def login_user(login: UserLogin, db: Session = Depends(get_db)):
             status_code=401,
             detail="Unauthorized, invalid password"
         )
-    # Generate JWT token
+    # JWT
     payload = {
         "userId": user.userId,
         "exp": datetime.utcnow() + timedelta(minutes=EXPIRE_MINUTES)
@@ -79,7 +77,6 @@ def change_password(data: ChangePasswordRequest, db: Session = Depends(get_db)):
     return {"message": "Password changed successfully"}
 
 def send_reset_email(to_email, reset_url):
-    # Simple email sending (configure SMTP as needed)
     smtp_server = os.getenv("SMTP_SERVER", "smtp.example.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "your@email.com")
@@ -94,17 +91,17 @@ def send_reset_email(to_email, reset_url):
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_user, [to_email], msg.as_string())
     except Exception as e:
-        print(f"[ERROR] Failed to send email: {e}")
-
+        print(f"[ERROR]")
+# Not tested
 @router.post("/reset-generate", status_code=status.HTTP_200_OK)
 def reset_generate(userId: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = fetch_user_by_id(userId, db)
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="User not found or email not set")
-    # Generate reset token
-    reset_token = str(uuid.uuid4())
+    #reset token
+    reset_token = int(uuid.uuid4())
     update_user(userId, {"resetToken": reset_token, "resetTokenCreatedAt": datetime.utcnow()}, db)
-    # Build reset URL (replace with actual frontend domain)
+    # reset URL
     reset_url = f"https://your-frontend-domain.com/reset-confirm?token={reset_token}"
     background_tasks.add_task(send_reset_email, user.email, reset_url)
     return {"message": "Reset token generated and email sent"}
@@ -118,7 +115,6 @@ def reset_confirm(data: ResetConfirmRequest, db: Session = Depends(get_db)):
     user = fetch_user_by_token(data.token, db)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
-    # Update new password
     hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     update_user(user.userId, {"password": hashed_pw, "resetToken": None, "lastUpdatedAt": datetime.utcnow()}, db)
     return {"message": "Password reset successfully"}

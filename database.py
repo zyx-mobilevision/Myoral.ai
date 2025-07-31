@@ -9,11 +9,17 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-DATABASE_URL = "postgresql://zyxczh:114514@localhost:5432/oral_db"
+ALGORITHM = os.getenv("ALGORITHM")# Hash algorithm for password
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASS")
+host = os.getenv("DB_HOST")
+port = os.getenv("DB_PORT")
+db = os.getenv("DB_NAME")
+
+DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db}"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -50,14 +56,14 @@ class Photo(Base):
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String)
     image_type = Column(String)  # 'front', 'left', 'right'
-    image_data = Column(String)  # Store image as binary
+    image_data = Column(String)  # Store image
     timestamp = Column(String)
 
 
-# Create tables
+# Create 
 Base.metadata.create_all(bind=engine)
 
-# Dependency to get sync database session
+# Dependency to get database session
 def get_db():
     db = SessionLocal()
     try:
@@ -127,6 +133,5 @@ def send_email(to_email, subject, body):
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.sendmail(from_email, to_email, msg.as_string())
-        print(f"[DEBUG] Email sent to {to_email} successfully.")
     except Exception as e:
         print(f"Failed to send email: {e}")

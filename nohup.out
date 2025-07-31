@@ -1046,3 +1046,77 @@ INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
 INFO:     Finished server process [1731618]
 INFO:     Stopping reloader process [1731098]
+INFO:     Will watch for changes in these directories: ['/home/oral_backend/myoral_backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [1995836] using WatchFiles
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [1995838]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1995838]
+[DEBUG]  using device: cuda
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [2030198]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/analyze.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2030198]
+[DEBUG]  using device: cuda
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [2045239]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[DEBUG] login received userid: aee5b1f7-3f43-498d-afdd-39adb50f42aa
+INFO:     10.10.11.36:60602 - "POST /v1/login HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60604 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60608 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60610 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+[DEBUG] login received userid: aee5b1f7-3f43-498d-afdd-39adb50f42aa
+INFO:     10.10.11.36:60612 - "POST /v1/login HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60614 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2045239]
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [2046353]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2046353]
+INFO:     Stopping reloader process [1995836]
+INFO:     Will watch for changes in these directories: ['/home/oral_backend/myoral_backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [2053511] using WatchFiles
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [2053513]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2053513]
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [2054396]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     10.10.11.36:60620 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60622 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60624 - "POST /v1/login HTTP/1.1" 200 OK
+INFO:     10.10.11.36:60626 - "GET /v1/users/aee5b1f7-3f43-498d-afdd-39adb50f42aa HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2054396]
+INFO:     Stopping reloader process [2053511]
