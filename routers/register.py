@@ -69,7 +69,8 @@ class ForgetPasswordRequest(BaseModel):
 
 # Pydantic model for forget password confirmation
 class ForgetPassword(BaseModel):
-    token: str
+    email: str
+    code: str
     new_password: str
 
 
@@ -166,15 +167,16 @@ def forget_password_request(data: ForgetPasswordRequest, request: Request, db: S
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         # Always return success message to avoid leaking user existence
-        return {"message": "If this email is registered, a reset link has been sent."}
-    # Generate JWT forget password token valid for 1 hour
-    forget_token = jwt.encode({"userId": user.userId, "exp": datetime.utcnow() + timedelta(hours=1)}, SECRET_KEY, algorithm=ALGORITHM)
-    base_url = str(request.base_url).rstrip('/')
-    forget_url = f"{base_url}/v1/register/forget-password?token={forget_token}"
+        return {"message": "If this email is registered, a reset code has been sent."}
+    # Generate random 6-digit code
+    import random
+    code = f"{random.randint(100000, 999999)}"
+    expiry = datetime.utcnow() + timedelta(minutes=10)
+    update_user(user.userId, {"reset_code": code, "reset_code_expiry": expiry}, db)
     subject = "Reset your password"
-    body = f"<p>Hi {user.username},</p><p>Click the link below to reset your password (valid for 1 hour):</p><p><a href='{forget_url}'>{forget_url}</a></p>"
+    body = f"<p>Hi {user.username},</p><p>Your password reset code is: <b>{code}</b> (valid for 10 minutes)</p>"
     send_email(user.email, subject, body)
-    return {"message": "If this email is registered, a reset link has been sent."}
+    return {"message": "If this email is registered, a reset code has been sent."}
 
 
 
@@ -184,19 +186,17 @@ def forget_password_request(data: ForgetPasswordRequest, request: Request, db: S
 # Backend verifies the token, updates the password, and responds with success or error.
 @router.post("/forget-password")
 def forget_password(data: ForgetPassword, db: Session = Depends(get_db)):
-    try:
-        # Decode JWT token
-        payload = jwt.decode(data.token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("userId")
-        user = fetch_user_by_id(user_id, db)
-        if not user:
-            raise HTTPException(status_code=400, detail="Invalid or expired token.")
-        # Hash and update new password
-        hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        update_user(user_id, {"password": hashed_pw, "lastUpdatedAt": datetime.utcnow()}, db)
-        return {"message": "Password reset successful."}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid or expired token. {str(e)}")
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not user.reset_code or not user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Invalid request or code.")
+    if user.reset_code != data.code:
+        raise HTTPException(status_code=400, detail="Incorrect code.")
+    if datetime.utcnow() > user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Code expired.")
+    # Hash and update new password, clear reset_code fields
+    hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    update_user(user.userId, {"password": hashed_pw, "lastUpdatedAt": datetime.utcnow(), "reset_code": None, "reset_code_expiry": None}, db)
+    return {"message": "Password reset successful."}
     
 
 # Endpoint: Login or register user using Google ID token
