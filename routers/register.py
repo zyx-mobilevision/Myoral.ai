@@ -61,13 +61,15 @@ class UserRegistrationResponse(BaseModel):
     message: str
 
 
-# Pydantic model for password reset request
-class PasswordResetRequest(BaseModel):
+
+# Pydantic model for forget password request
+class ForgetPasswordRequest(BaseModel):
     email: str
 
 
-# Pydantic model for password reset confirmation
-class PasswordReset(BaseModel):
+
+# Pydantic model for forget password confirmation
+class ForgetPassword(BaseModel):
     token: str
     new_password: str
 
@@ -155,28 +157,34 @@ def register_user(user: UserRegistration, request: Request, db: Session = Depend
 #         return {"message": f"Invalid or expired token. {str(e)}"}
 
 
-# Endpoint: Request password reset
-# Generates a reset token and sends a reset link to the user's email
-@router.post("/reset-password-request")
-def reset_password_request(data: PasswordResetRequest, request: Request, db: Session = Depends(get_db)):
+
+# Endpoint: Request forget password
+# Purpose: User requests to reset their password if forgotten.
+# Frontend should send a POST request to /forget-password-request with JSON body: { "email": "user@example.com" }
+# Backend will generate a token and send a reset link to the user's email if registered.
+@router.post("/forget-password-request")
+def forget_password_request(data: ForgetPasswordRequest, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         # Always return success message to avoid leaking user existence
         return {"message": "If this email is registered, a reset link has been sent."}
-    # Generate JWT reset token valid for 1 hour
-    reset_token = jwt.encode({"userId": user.userId, "exp": datetime.utcnow() + timedelta(hours=1)}, SECRET_KEY, algorithm=ALGORITHM)
+    # Generate JWT forget password token valid for 1 hour
+    forget_token = jwt.encode({"userId": user.userId, "exp": datetime.utcnow() + timedelta(hours=1)}, SECRET_KEY, algorithm=ALGORITHM)
     base_url = str(request.base_url).rstrip('/')
-    reset_url = f"{base_url}/v1/register/reset-password?token={reset_token}"
+    forget_url = f"{base_url}/v1/register/forget-password?token={forget_token}"
     subject = "Reset your password"
-    body = f"<p>Hi {user.username},</p><p>Click the link below to reset your password (valid for 1 hour):</p><p><a href='{reset_url}'>{reset_url}</a></p>"
+    body = f"<p>Hi {user.username},</p><p>Click the link below to reset your password (valid for 1 hour):</p><p><a href='{forget_url}'>{forget_url}</a></p>"
     send_email(user.email, subject, body)
     return {"message": "If this email is registered, a reset link has been sent."}
 
 
-# Endpoint: Reset password using token
-# Verifies token, hashes new password, and updates user record
-@router.post("/reset-password")
-def reset_password(data: PasswordReset, db: Session = Depends(get_db)):
+
+# Endpoint: Forget password (reset password using token)
+# Purpose: User submits new password and token received from email link.
+# Frontend should send a POST request to /forget-password with JSON body: { "token": "...", "new_password": "..." }
+# Backend verifies the token, updates the password, and responds with success or error.
+@router.post("/forget-password")
+def forget_password(data: ForgetPassword, db: Session = Depends(get_db)):
     try:
         # Decode JWT token
         payload = jwt.decode(data.token, SECRET_KEY, algorithms=[ALGORITHM])
