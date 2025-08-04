@@ -83,6 +83,7 @@ def format_hk_phone_number(phone: str) -> str:
         return phone
     return '+852' + phone
 
+router = APIRouter()
 
 # Endpoint: Register a new user
 # Hashes password, creates user record, and inserts into database

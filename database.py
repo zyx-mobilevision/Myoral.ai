@@ -31,12 +31,21 @@ class User(Base):
     username = Column(String, nullable=False)
     email = Column(String, nullable=False)
     phoneNumber = Column(String, nullable=False)
-    fullName = Column(String, nullable=False)
-    birthdate = Column(String, nullable=False)  
-    password = Column(String, nullable=False)  
+    # fullName = Column(String, nullable=False)
+    # birthdate = Column(String, nullable=False)  
+    # password = Column(String, nullable=False)  
+    
+    # For testing google login
+    # Set nullable=True for optional fields
+    # In PSQL, I set phoneNumber, fullNmae, password, birthday as nullable=True for testing purpose
+    # ALTER TABLE "Users" ALTER COLUMN "[columnName]" DROP NOT NULL;
+    fullName = Column(String, nullable=True)
+    birthdate = Column(String, nullable=True)  
+    password = Column(String, nullable=True)  
+    
     gender = Column(String, nullable=True)
     ageGroup = Column(String, nullable=True)
-    appointDate = Column(String, nullable=True)  
+    appointDate = Column(String, nullable=True) 
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)

@@ -6,7 +6,8 @@ cd $PATH_TO_MYORAL_SERVER || { echo "Failed to change directory to $PATH_TO_MYOR
 # Activate myenv    
 source myenv/bin/activate
 if [[ "$VIRTUAL_ENV" != "" ]]; then
-    echo "Virtual environment activated successfully: $VIRTUAL_ENV"
+    # Display path in green color
+    echo -e "Virtual environment activated successfully: \033[0;32m$PATH_TO_MYORAL_SERVER\033[0m"
 else
     echo "Failed to activate virtual environment."
     exit 1
@@ -21,7 +22,7 @@ fi
 echo "Starting server with nohup..."
 nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
 if [[ $? -eq 0 ]]; then
-    echo "Server started with nohup in the background."
+    echo -e "\033[0;32mServer started with nohup in the background.\033[0m"
 else
     echo "Failed to start server with nohup."
     exit 1
