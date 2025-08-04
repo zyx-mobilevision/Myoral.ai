@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 import bcrypt
 import requests
 
+router = APIRouter()
+
 # Load environment variables from .env file
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -103,7 +105,7 @@ def format_hk_phone_number(phone: str) -> str:
         return phone
     return '+852' + phone
 
-router = APIRouter()
+
 
 # Endpoint: Register a new user
 # Hashes password, creates user record, and inserts into database
