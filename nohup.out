@@ -273,3 +273,20 @@ Traceback (most recent call last):
     @router.post("/register", response_model=UserRegistrationResponse)
      ^^^^^^
 NameError: name 'router' is not defined
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [309381]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     10.10.11.36:34518 - "POST /v1/login HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34520 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34536 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34538 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34544 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34546 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34556 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34558 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34580 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34582 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34596 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
+INFO:     10.10.11.36:34598 - "GET /v1/users/ee798617-3662-4248-b30a-30bfab2f99ef HTTP/1.1" 200 OK
