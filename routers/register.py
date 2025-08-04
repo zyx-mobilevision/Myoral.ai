@@ -1,3 +1,20 @@
+# Pydantic model for code verification only
+class CodeVerificationRequest(BaseModel):
+    email: str
+    code: str
+
+# Endpoint: Verify 6-digit code only (step 2)
+@router.post("/verify-reset-code")
+def verify_reset_code(data: CodeVerificationRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not user.reset_code or not user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Invalid request or code.")
+    if user.reset_code != data.code:
+        raise HTTPException(status_code=400, detail="Incorrect code.")
+    if datetime.utcnow() > user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Code expired.")
+    return {"message": "Code verified. You may now reset your password."}
+
 
 # FastAPI router for user registration, password reset, and Google login endpoints
 from fastapi import APIRouter, Depends, HTTPException, Request, Body
@@ -72,6 +89,7 @@ class ForgetPassword(BaseModel):
     email: str
     code: str
     new_password: str
+    confirm_password: str
 
 
 # Utility function to format Hong Kong phone numbers to +852 format
@@ -193,6 +211,10 @@ def forget_password(data: ForgetPassword, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Incorrect code.")
     if datetime.utcnow() > user.reset_code_expiry:
         raise HTTPException(status_code=400, detail="Code expired.")
+    if data.new_password != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match.")
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
     # Hash and update new password, clear reset_code fields
     hashed_pw = bcrypt.hashpw(data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     update_user(user.userId, {"password": hashed_pw, "lastUpdatedAt": datetime.utcnow(), "reset_code": None, "reset_code_expiry": None}, db)
