@@ -6,8 +6,7 @@ from pydantic import BaseModel
 # Import database models and utility functions
 from database import (
     User, get_db, Photo,
-    insert_user, fetch_user_by_name, fetch_user_by_id, fetch_user_by_token, update_user, delete_user, send_email
-)
+    insert_user, fetch_user_by_name, fetch_user_by_id, fetch_user_by_token, update_user, delete_user, send_email)
 import uuid
 from datetime import datetime, timedelta
 from enum import Enum
