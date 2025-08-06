@@ -1,11 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Path, Query, Form
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 
+
 # Standard imports
 import os
 import io
 import base64
 import json
+import numpy as np
 from datetime import datetime, timedelta
 
 # Third-party imports
@@ -17,11 +19,9 @@ from PIL import Image
 # Project helpers (use absolute imports)
 from Myoral.ai.routers.image_analysis_helpers import (
     run_yolo_inference,
-    postprocess_yolo_output,
     get_class_labels,
     count_class_pixels,
     count_class_objects,
-    render_mask_overlay,
     save_mask_and_id,
     fetch_and_update_user_info_and_history
 )
@@ -91,20 +91,79 @@ async def analyze_photos(
         contents = await image.read()
         uploaded_img = Image.open(io.BytesIO(contents)).convert("RGB")
 
-        # 2. Run YOLO inference and postprocess
+        # 2. Run YOLO inference
         results = run_yolo_inference(uploaded_img)
-        mask, class_ids = postprocess_yolo_output(results)
 
-        # 3. Get class labels and counts
+        # 3. Post-process YOLO output to get mask and class ids (original logic)
+        mask = None
+        if hasattr(results[0], "masks") and results[0].masks is not None:
+            masks = results[0].masks.data.cpu().numpy()
+            if hasattr(results[0], "boxes") and hasattr(results[0].boxes, "cls"):
+                class_ids = results[0].boxes.cls.cpu().numpy().astype(np.uint8)
+            else:
+                raise HTTPException(status_code=500, detail="Model did not return class ids")
+            if masks.ndim == 3 and masks.shape[0] > 0 and masks.shape[0] == class_ids.shape[0]:
+                max_probs = masks.max(axis=0)
+                mask_indices = masks.argmax(axis=0)
+                mask = np.zeros_like(max_probs, dtype=np.uint8)
+                for idx in range(masks.shape[0]):
+                    mask[mask_indices == idx] = class_ids[idx] + 1
+                mask[max_probs <= 0.5] = 0
+            else:
+                raise HTTPException(status_code=500, detail="status 500")
+        else:
+            raise HTTPException(status_code=500, detail="error")
+
+        # 4. Get class labels and counts
         class_labels = get_class_labels()
         class_counts = count_class_pixels(mask, class_labels)
         report_classes = ["Tooth", "Caries", "GumInflam", "Recession"]
         class_object_counts = count_class_objects(class_ids, class_labels, report_classes)
 
-        # 4. Render mask overlay
-        blended, mask_np, color_map, render_alpha = render_mask_overlay(uploaded_img, mask, results)
+        # 5. Render mask overlay (original logic)
+        h, w = mask.shape
+        color_map = [
+            (255, 255, 255),     # 0: white
+            (255, 0, 0),         # 1: bright red
+            (0, 255, 0),         # 2: bright blue
+            (255, 255, 0),       # 3: bright yellow
+            (255, 255, 255),     # 4: white
+            (0, 0, 255),         # 5: blue
+            (255, 0, 255),       # 6: magenta
+            (0, 255, 255),       # 7: cyan
+            (255, 128, 0),       # 8: orange
+            (0, 0, 0),           # 9: black
+        ]
+        render_alpha = 150  # alpha
+        color_mask = np.zeros((h, w, 4), dtype=np.uint8)
+        render_classes = [1, 2, 3, 5, 6]
+        for v in range(len(color_map)):
+            color = color_map[v]
+            if v in render_classes:
+                color_mask[mask == v, :3] = color
+                color_mask[mask == v, 3] = render_alpha
+            else:
+                color_mask[mask == v, :3] = (255, 255, 255)
+                color_mask[mask == v, 3] = render_alpha
+        color_mask_pil = Image.fromarray(color_mask, mode="RGBA")
+        mask_np = np.array(mask)
 
-        # 5. Guest mode (userId == "0")
+        # Draw contour
+        contour_img = np.array(color_mask_pil).copy()
+        for class_id in np.unique(mask_np):
+            if (class_id == 0) or (class_id == 4):
+                continue
+            binary = (mask_np == class_id).astype(np.uint8) * 255
+            import cv2
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(contour_img, contours, -1, (0, 0, 0, 255), 2)
+        contour_mask_pil = Image.fromarray(contour_img).convert("RGBA")
+        original_img = uploaded_img.resize(contour_mask_pil.size).convert("RGBA")
+        blended = Image.alpha_composite(original_img, color_mask_pil)
+        blended = Image.alpha_composite(blended, contour_mask_pil)
+        blended = blended.convert("RGB")
+
+        # 6. Guest mode (userId == "0")
         if userId == "0":
             buf = io.BytesIO()
             blended.save(buf, format="PNG")
@@ -114,7 +173,7 @@ async def analyze_photos(
             return StreamingResponse(buf, media_type="image/png", headers={
                 "X-Report-PDF-Base64": pdf_base64
             })
-        # 6. Registered user mode
+        # 7. Registered user mode
         else:
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             user_mask_dir = os.path.join("masks", userId, datetime.utcnow().strftime("%Y%m%d%H%M%S"))
