@@ -27,6 +27,12 @@ from .image_analysis_helpers import (
 )
 from .pdf_report_helpers import generate_pdf_report
 
+from ultralytics import YOLO
+import torch
+device = "cuda" if torch.cuda.is_available() else "cpu"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..","models", "6_30best_aug.pt")
+yolo_model = YOLO(MODEL_PATH)
+yolo_model.to(device)
 
 router = APIRouter()
 
@@ -90,7 +96,7 @@ async def analyze_photos(
         uploaded_img = Image.open(io.BytesIO(contents)).convert("RGB")
 
         # 2. Run YOLO inference
-        results = run_yolo_inference(uploaded_img)
+        results = run_yolo_inference(yolo_model, uploaded_img, device)
 
         # 3. Post-process YOLO output to get mask and class ids (original logic)
         mask = None
@@ -176,12 +182,9 @@ async def analyze_photos(
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             user_mask_dir = os.path.join("masks", userId, datetime.utcnow().strftime("%Y%m%d%H%M%S"))
             os.makedirs(user_mask_dir, exist_ok=True)
-            mask_path = os.path.join(user_mask_dir, "mask.png")
-            blended.save(mask_path)
-            mask_id_path = os.path.join(user_mask_dir, "mask_id.npy")
-            save_mask_and_id(mask_np, mask_id_path)
+            save_mask_and_id(blended, mask_np, user_mask_dir)
             # Fetch and update user info/history
-            user_info, caries_history, recession_history = fetch_and_update_user_info_and_history(userId, class_object_counts)
+            user_info, caries_history, recession_history = get_user_info_and_update_history(userId, class_object_counts)
             pdf_buf = generate_pdf_report(class_object_counts, timestamp, blended, color_map, class_labels, user_info, caries_history, recession_history)
             pdf_path = os.path.join(user_mask_dir, "report.pdf")
             with open(pdf_path, "wb") as f:
@@ -195,9 +198,10 @@ async def analyze_photos(
                 "message": "Colored mask, mask id array, and PDF report generated successfully"
             }
     except Exception as e:
+        print(f"Error processing image: {e}")
         raise HTTPException(
             status_code=500,
-            detail="Image processing error"
+            detail="Image processing error: {e}"
         )
 
 @router.get("/analysis/maskid/{userid}")
