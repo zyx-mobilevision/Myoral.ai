@@ -17,7 +17,7 @@ from PIL import Image
 
 
 # Project helpers (use absolute imports)
-from .image_analysis_helpers import (
+from .helper_functions.image_analysis_helpers import (
     run_yolo_inference,
     get_class_labels,
     count_class_pixels,
@@ -25,7 +25,7 @@ from .image_analysis_helpers import (
     save_mask_and_id,
     get_user_info_and_update_history
 )
-from .pdf_report_helpers import generate_pdf_report
+from .helper_functions.pdf_report_helpers import generate_pdf_report
 
 from ultralytics import YOLO
 import torch
