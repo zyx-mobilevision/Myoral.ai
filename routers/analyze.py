@@ -13,8 +13,9 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, status, Path, Qu
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from PIL import Image
 
-# Project helpers
-from ..image_analysis_helpers import (
+
+# Project helpers (use absolute imports)
+from Myoral.ai.routers.image_analysis_helpers import (
     run_yolo_inference,
     postprocess_yolo_output,
     get_class_labels,
@@ -24,7 +25,7 @@ from ..image_analysis_helpers import (
     save_mask_and_id,
     fetch_and_update_user_info_and_history
 )
-from ..pdf_report_helpers import generate_pdf_report
+from Myoral.ai.routers.pdf_report_helpers import generate_pdf_report
 
 
 router = APIRouter()

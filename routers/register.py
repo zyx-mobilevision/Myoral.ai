@@ -1,19 +1,3 @@
-# Pydantic model for code verification only
-class CodeVerificationRequest(BaseModel):
-    email: str
-    code: str
-
-# Endpoint: Verify 6-digit code only (step 2)
-@router.post("/verify-reset-code")
-def verify_reset_code(data: CodeVerificationRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email).first()
-    if not user or not user.reset_code or not user.reset_code_expiry:
-        raise HTTPException(status_code=400, detail="Invalid request or code.")
-    if user.reset_code != data.code:
-        raise HTTPException(status_code=400, detail="Incorrect code.")
-    if datetime.utcnow() > user.reset_code_expiry:
-        raise HTTPException(status_code=400, detail="Code expired.")
-    return {"message": "Code verified. You may now reset your password."}
 
 
 # FastAPI router for user registration, password reset, and Google login endpoints
@@ -32,6 +16,23 @@ import os
 from dotenv import load_dotenv
 import bcrypt
 import requests
+
+# Pydantic model for code verification only
+class CodeVerificationRequest(BaseModel):
+    email: str
+    code: str
+
+# Endpoint: Verify 6-digit code only (step 2)
+@router.post("/verify-reset-code")
+def verify_reset_code(data: CodeVerificationRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not user.reset_code or not user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Invalid request or code.")
+    if user.reset_code != data.code:
+        raise HTTPException(status_code=400, detail="Incorrect code.")
+    if datetime.utcnow() > user.reset_code_expiry:
+        raise HTTPException(status_code=400, detail="Code expired.")
+    return {"message": "Code verified. You may now reset your password."}
 
 router = APIRouter()
 
