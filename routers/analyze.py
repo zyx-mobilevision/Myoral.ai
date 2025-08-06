@@ -17,20 +17,18 @@ from PIL import Image
 
 
 # Project helpers (use absolute imports)
-from Myoral.ai.routers.image_analysis_helpers import (
+from .image_analysis_helpers import (
     run_yolo_inference,
     get_class_labels,
     count_class_pixels,
     count_class_objects,
     save_mask_and_id,
-    fetch_and_update_user_info_and_history
+    get_user_info_and_update_history
 )
-from Myoral.ai.routers.pdf_report_helpers import generate_pdf_report
+from .pdf_report_helpers import generate_pdf_report
 
 
 router = APIRouter()
-
-
 
 
 @router.get("/analysis/mask/{userid}")

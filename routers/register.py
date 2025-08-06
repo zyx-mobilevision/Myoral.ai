@@ -22,6 +22,7 @@ class CodeVerificationRequest(BaseModel):
     email: str
     code: str
 
+router = APIRouter()
 # Endpoint: Verify 6-digit code only (step 2)
 @router.post("/verify-reset-code")
 def verify_reset_code(data: CodeVerificationRequest, db: Session = Depends(get_db)):
