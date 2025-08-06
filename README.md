@@ -53,22 +53,18 @@ Myoral/
 
 4. **Start the Backend Server**
 
-   For development, you can run with '--reload' option so that the server is auto-reloaded when there any change in the project source code:
+   For development, you can run uvicorn with '--reload' option so that the server is auto-reloaded when there any change in the project source code:
    ```sh
    uvicorn main:app --reload
    ```
-   For deployment, you can run the shell script     
-   ```sh
-   run_myoral_server.sh
-   ```
-   to activate the venv and run uvicorn to deploy the server in the background with 'no hangup'. The console log would be redirected to the file nohup.out.
+   For deployment, you can run the shell script run_myoral_server.sh to activate the venv and run uvicorn to deploy the server in the background with 'no hangup'. The console log would be redirected to the file nohup.out.
    Before running it, update the path to the server backend folder in run_myoral_server.sh:  
    ```sh
    PATH_TO_MYORAL_SERVER="/home/oral_backend/myoral_backend"
    ```
 6. **API Documentation**
 
-   Visit [http://localhost:8000/docs](http://localhost:8000/docs) in your browser for all endpoints and testing.
+   Visit [http://localhost:8000/docs](http://localhost:8000/docs) in your browser for a list of endpoints and for testing purposes.
 
 ## Core API Endpoints
 
