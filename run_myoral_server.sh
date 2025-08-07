@@ -5,6 +5,13 @@ PATH_TO_MYORAL_SERVER="/home/oral_backend/myoral_backend"
 SERVER_CMD="uvicorn main:app --host 0.0.0.0 --port 8000"
 
 echo "[MyOral Server starting script]"
+echo "Checking if MyOral Server is already running..."
+if pgrep -f "$SERVER_CMD" > /dev/null; then
+    # Display message in blue
+    echo -e "\033[0;34mMyOral Server is already running. Please stop it before starting a new instance.\033[0m"
+    exit 1
+fi
+
 echo "Server path: $PATH_TO_MYORAL_SERVER"
 cd $PATH_TO_MYORAL_SERVER || { echo "Failed to change directory to $PATH_TO_MYORAL_SERVER"; exit 1; }
 # Activate myenv    
