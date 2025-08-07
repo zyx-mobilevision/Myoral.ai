@@ -26,6 +26,7 @@ from .helper_functions.image_analysis_helpers import (
     get_user_info_and_update_history
 )
 from .helper_functions.pdf_report_helpers import generate_pdf_report
+from .helper_functions.chart_data_helpers import generate_chart_data
 
 from ultralytics import YOLO
 import torch
@@ -232,3 +233,68 @@ async def get_pdf_report(pdf_path: str):
         media_type="application/pdf",
         filename=filename
     )
+
+@router.get("/analysis/charts/{userid}")
+async def get_chart_data(
+    userid: str
+):
+    """
+    Get chart data for frontend plotting including caries, recession, and gum inflammation trends.
+    
+    Args:
+        userid: User ID to fetch chart data for
+        
+    Returns:
+        Dictionary containing chart data for all three charts with metadata
+    """
+    try:
+        # Fetch user info and history data (same logic as in PDF generation)
+        user_info = None
+        caries_history = None
+        recession_history = None
+        
+        try:
+            from database import get_db, fetch_user_by_id
+            db_gen = get_db()
+            db = next(db_gen)
+            user_obj = fetch_user_by_id(userid, db)
+            
+            if user_obj:
+                user_info = {
+                    "Name": user_obj.fullName,
+                    "Gender": user_obj.gender,
+                    "Birthdate": user_obj.birthdate,
+                    "Email": user_obj.email,
+                    "Phone": user_obj.phoneNumber
+                }
+                
+                # Parse historical data
+                if user_obj.caries_number:
+                    try:
+                        caries_history = json.loads(user_obj.caries_number)
+                    except Exception:
+                        caries_history = {}
+                
+                if user_obj.recession_number:
+                    try:
+                        recession_history = json.loads(user_obj.recession_number)
+                    except Exception:
+                        recession_history = {}
+            
+            db.close()
+            
+        except Exception as e:
+            print(f"[WARNING] Could not fetch user data for charts: {e}")
+            # Continue with None values for guest-like behavior
+        
+        # Generate chart data using helper function
+        chart_data = generate_chart_data(user_info, caries_history, recession_history)
+        
+        return chart_data
+        
+    except Exception as e:
+        print(f"[ERROR] get_chart_data: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate chart data: {e}"
+        )
