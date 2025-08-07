@@ -1,6 +1,10 @@
 #!/bin/bash
-echo "[MyOral Server starting script]"
+# Call this script to start the MyOral server
+# You may need to adjust the PATH_TO_MYORAL_SERVER or the SERVER_CMD variable if your server path or command line changes 
 PATH_TO_MYORAL_SERVER="/home/oral_backend/myoral_backend"    
+SERVER_CMD="uvicorn main:app --host 0.0.0.0 --port 8000"
+
+echo "[MyOral Server starting script]"
 echo "Server path: $PATH_TO_MYORAL_SERVER"
 cd $PATH_TO_MYORAL_SERVER || { echo "Failed to change directory to $PATH_TO_MYORAL_SERVER"; exit 1; }
 # Activate myenv    
@@ -20,7 +24,7 @@ fi
 # Start the server using nohup to keep it running in the background
 # and redirect output to nohup.out
 echo "Starting server with nohup..."
-nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
+nohup $SERVER_CMD &
 if [[ $? -eq 0 ]]; then
     echo -e "\033[0;32mServer started with nohup in the background.\033[0m"
 else
