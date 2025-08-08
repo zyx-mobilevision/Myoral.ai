@@ -1,6 +1,5 @@
 __pycache__/
-oralenv/
-myenv/
+myoral_venv/
 WorkingFlow/
 uploads/
 masks/
@@ -9,7 +8,6 @@ dataset/
 models/
 users/
 .vscode/
-nohup.out/
 uvicorn.log/
 log.txt
-nohup.out/
+nohup.out
