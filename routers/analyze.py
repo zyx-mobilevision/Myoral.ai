@@ -38,7 +38,7 @@ yolo_model.to(device)
 router = APIRouter()
 
 
-@router.get("/analysis/mask/{userid}")
+@router.get("/analysis/detectedFeatureImage/{userid}")
 async def get_mask_image(
     userid: str,
     time: str = Query("latest", description="get the corresponding file"),
@@ -205,7 +205,7 @@ async def analyze_photos(
             detail="Image processing error: {e}"
         )
 
-@router.get("/analysis/maskid/{userid}")
+@router.get("/analysis/featureMap/{userid}")
 async def get_mask_id_array(
     userid: str
 ):
