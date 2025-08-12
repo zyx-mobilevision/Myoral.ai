@@ -5,11 +5,19 @@
 # Use this to check if server is currently running:  
 # ps aux | grep --color=always myoral_backend | grep -v grep
 
-PATH_TO_MYORAL_SERVER="/home/myoral/dev/myoral_backend"    
-# HTTP:
+USE_SECURE_CONNECTIONS=true
+USE_SECURE_CONNECTIONS=false
+PATH_TO_MYORAL_SERVER="/home/myoral/dev/myoral_backend"
+# Basic server command line that works with HTTP:
 SERVER_CMD="uvicorn main:app --host 0.0.0.0 --port 8000"
-# HTTPS:
-SERVER_CMD="uvicorn main:app --host 0.0.0.0 --port 8000 --ssl-keyfile $PATH_TO_MYORAL_SERVER/key.pem --ssl-certfile $PATH_TO_MYORAL_SERVER/cert.pem"
+
+if [ "$USE_SECURE_CONNECTIONS" = true ]; then
+    # Append SSL options for HTTPS
+    SERVER_CMD="$SERVER_CMD --ssl-keyfile $PATH_TO_MYORAL_SERVER/key.pem --ssl-certfile $PATH_TO_MYORAL_SERVER/cert.pem"
+    echo -e "Using \033[0;32msecure\033[0m connections with SSL."
+else
+    echo -e "Using \033[0;31minsecure\033[0m connections without SSL."
+fi
 
 echo "[MyOral Server starting script]"
 echo "Checking if MyOral Server is already running..."
