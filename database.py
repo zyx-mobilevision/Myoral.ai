@@ -31,12 +31,21 @@ class User(Base):
     username = Column(String, nullable=False)
     email = Column(String, nullable=False)
     phoneNumber = Column(String, nullable=False)
-    fullName = Column(String, nullable=False)
-    birthdate = Column(String, nullable=False)  
-    password = Column(String, nullable=False)  
+    # fullName = Column(String, nullable=False)
+    # birthdate = Column(String, nullable=False)  
+    # password = Column(String, nullable=False)  
+    
+    # For testing google login
+    # Set nullable=True for optional fields
+    # In PSQL, I set phoneNumber, fullNmae, password, birthday as nullable=True for testing purpose
+    # ALTER TABLE "Users" ALTER COLUMN "[columnName]" DROP NOT NULL;
+    fullName = Column(String, nullable=True)
+    birthdate = Column(String, nullable=True)  
+    password = Column(String, nullable=True)  
+    
     gender = Column(String, nullable=True)
     ageGroup = Column(String, nullable=True)
-    appointDate = Column(String, nullable=True)  
+    appointDate = Column(String, nullable=True) 
     createdAt = Column(DateTime, default=datetime.utcnow)
     lastUpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     token = Column(String, nullable=True)
@@ -48,6 +57,8 @@ class User(Base):
     caries_number = Column(String, nullable=True)  
     recession_number = Column(String, nullable=True)  
     client_id = Column(String, nullable=False, default="0") 
+    reset_code = Column(String(6), nullable=True)  # 6-digit code for password reset
+    reset_code_expiry = Column(DateTime, nullable=True)  # Expiry time for reset code
 
 
 class Photo(Base):
@@ -120,7 +131,7 @@ def send_email(to_email, subject, body):
     smtp_server = os.getenv("SMTP_SERVER")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
     smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_password = os.getenv("SMTP_PASS")
     from_email = smtp_user
     msg = MIMEMultipart()
     msg["From"] = from_email
@@ -133,5 +144,6 @@ def send_email(to_email, subject, body):
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.sendmail(from_email, to_email, msg.as_string())
+            print(f"[DEBUG] Email sent to {to_email}")
     except Exception as e:
         print(f"Failed to send email: {e}")
