@@ -1,0 +1,122 @@
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [155512]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 13] error while attempting to bind on address ('0.0.0.0', 443): permission denied
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [155674]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44826 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44826 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44826 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44826 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     Shutting down
+Traceback (most recent call last):
+  File "/home/myoral/dev/myoral_backend/myoral_venv/bin/uvicorn", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1442, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1363, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1226, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 794, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/main.py", line 416, in main
+    run(
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/main.py", line 587, in run
+    server.run()
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/config.py", line 430, in load
+    self.ssl: Optional[ssl.SSLContext] = create_ssl_context(
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/config.py", line 121, in create_ssl_context
+    ctx.load_cert_chain(certfile, keyfile, get_password)
+FileNotFoundError: [Errno 2] No such file or directory
+Traceback (most recent call last):
+  File "/home/myoral/dev/myoral_backend/myoral_venv/bin/uvicorn", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1442, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1363, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 1226, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/click/core.py", line 794, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/main.py", line 416, in main
+    run(
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/main.py", line 587, in run
+    server.run()
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/config.py", line 430, in load
+    self.ssl: Optional[ssl.SSLContext] = create_ssl_context(
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/myoral/dev/myoral_backend/myoral_venv/lib/python3.12/site-packages/uvicorn/config.py", line 121, in create_ssl_context
+    ctx.load_cert_chain(certfile, keyfile, get_password)
+FileNotFoundError: [Errno 2] No such file or directory
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [168005]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [168797]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:59348 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59348 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59348 - "GET /openapi.json HTTP/1.1" 200 OK
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [170462]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:48958 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48958 - "GET /openapi.json HTTP/1.1" 200 OK
+WARNING ⚠️ user config directory '/home/myoral/.config/Ultralytics' is not writeable, defaulting to '/tmp' or CWD.Alternatively you can define a YOLO_CONFIG_DIR environment variable for this path.
+INFO:     Started server process [171226]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
