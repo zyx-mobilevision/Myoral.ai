@@ -6,7 +6,7 @@
 # ps aux | grep --color=always myoral_backend | grep -v grep
 
 USE_SECURE_CONNECTIONS=true
-USE_SECURE_CONNECTIONS=false
+#USE_SECURE_CONNECTIONS=false
 PATH_TO_MYORAL_SERVER="/home/myoral/dev/myoral_backend"
 # Basic server command line that works with HTTP:
 SERVER_CMD="uvicorn main:app --host 0.0.0.0 --port 8000"
@@ -55,9 +55,11 @@ if ! command -v uvicorn &> /dev/null; then
 fi
 # Start the server using nohup to keep it running in the background
 # and redirect output to nohup.out
-echo "Starting server with nohup..."
-echo "nohup $SERVER_CMD &"
-nohup $SERVER_CMD &
+echo "Starting server..."
+ACTUAL_CMD="nohup $SERVER_CMD &"
+ACTUAL_CMD="$SERVER_CMD"
+echo "$ACTUAL_CMD"
+$ACTUAL_CMD
 if [[ $? -eq 0 ]]; then
     echo -e "\033[0;32mServer started with nohup in the background.\033[0m"
 else
