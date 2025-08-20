@@ -138,7 +138,7 @@ def send_email(to_email, subject, body):
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "html", "utf-8"))
-    print(f"[DEBUG] Try send email to {to_email} via {smtp_server}:{smtp_port} as {smtp_user}")
+    # print(f"[DEBUG] Try send email to {to_email} via {smtp_server}:{smtp_port} as {smtp_user}")
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
