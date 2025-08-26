@@ -1,0 +1,4 @@
+2025-08-26 07:45:05,728 - master_main - INFO - 🚀 Starting MyOral Master Server
+2025-08-26 07:45:05,728 - master_main - INFO - ✅ Database initialized successfully
+2025-08-26 07:45:05,728 - master_main - WARNING - ⚠️  Missing environment variables: ['MASTER_DB_HOST', 'MASTER_DB_PORT', 'MASTER_DB_NAME', 'MASTER_DB_USER', 'MASTER_DB_PASS', 'MASTER_SERVER_SALT']
+2025-08-26 07:45:05,728 - master_main - INFO - 🟢 Master Server startup complete

@@ -8,11 +8,12 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from ..models import (
-    UserGrowthResponse, DemographicsResponse, ClientStatsResponse,
-    PhotoUploadPatternsResponse, SystemHealthResponse, APIKeyRequest, APIKeyResponse
-)
-from ..database import DatabaseManager
+# from master_architecture.models import (
+#     UserGrowthResponse, DemographicsResponse, ClientStatsResponse,
+#     PhotoUploadPatternsResponse, SystemHealthResponse, APIKeyRequest, APIKeyResponse
+# )
+
+from master_architecture.database import DatabaseManager
 
 class MasterServerAPIDesign:
     """Master Server Analytics API Implementation"""
@@ -70,89 +71,89 @@ class MasterServerAPIDesign:
             return {"status": "healthy", "timestamp": datetime.now()}
         
         # Analytics Endpoints
-        @self.app.get("/api/analytics/users/growth", 
-                     response_model=List[UserGrowthResponse],
-                     tags=["Analytics"])
-        async def get_user_growth(
-            period: str = "monthly",
-            start_date: Optional[date] = None,
-            end_date: Optional[date] = None,
-            client_id: str = Depends(self.verify_api_key)
-        ):
-            """Get user registration growth trends"""
-            data = self.db.get_user_growth_data(period, start_date, end_date)
-            return [UserGrowthResponse(**item) for item in data]
+        # @self.app.get("/api/analytics/users/growth", 
+        #              response_model=List[UserGrowthResponse],
+        #              tags=["Analytics"])
+        # async def get_user_growth(
+        #     period: str = "monthly",
+        #     start_date: Optional[date] = None,
+        #     end_date: Optional[date] = None,
+        #     client_id: str = Depends(self.verify_api_key)
+        # ):
+        #     """Get user registration growth trends"""
+        #     data = self.db.get_user_growth_data(period, start_date, end_date)
+        #     return [UserGrowthResponse(**item) for item in data]
         
-        @self.app.get("/api/analytics/demographics",
-                     response_model=DemographicsResponse,
-                     tags=["Analytics"])
-        async def get_demographics(
-            client_id: Optional[str] = None,
-            authenticated_client: str = Depends(self.verify_api_key)
-        ):
-            """Get demographic distribution across users"""
-            data = self.db.get_demographics_data(client_id)
-            return DemographicsResponse(**data)
+        # @self.app.get("/api/analytics/demographics",
+        #              response_model=DemographicsResponse,
+        #              tags=["Analytics"])
+        # async def get_demographics(
+        #     client_id: Optional[str] = None,
+        #     authenticated_client: str = Depends(self.verify_api_key)
+        # ):
+        #     """Get demographic distribution across users"""
+        #     data = self.db.get_demographics_data(client_id)
+        #     return DemographicsResponse(**data)
         
-        @self.app.get("/api/analytics/clients/{target_client_id}/stats",
-                     response_model=ClientStatsResponse,
-                     tags=["Analytics"])
-        async def get_client_stats(
-            target_client_id: str,
-            authenticated_client: str = Depends(self.verify_api_key)
-        ):
-            """Get statistics for a specific client server"""
-            data = self.db.get_client_stats(target_client_id)
-            return ClientStatsResponse(**data)
+        # @self.app.get("/api/analytics/clients/{target_client_id}/stats",
+        #              response_model=ClientStatsResponse,
+        #              tags=["Analytics"])
+        # async def get_client_stats(
+        #     target_client_id: str,
+        #     authenticated_client: str = Depends(self.verify_api_key)
+        # ):
+        #     """Get statistics for a specific client server"""
+        #     data = self.db.get_client_stats(target_client_id)
+        #     return ClientStatsResponse(**data)
         
-        @self.app.get("/api/analytics/photos/upload-patterns",
-                     response_model=PhotoUploadPatternsResponse,
-                     tags=["Analytics"])
-        async def get_photo_upload_patterns(
-            client_id: Optional[str] = None,
-            authenticated_client: str = Depends(self.verify_api_key)
-        ):
-            """Get photo upload patterns and trends"""
-            data = self.db.get_photo_upload_patterns(client_id)
-            return PhotoUploadPatternsResponse(**data)
+        # @self.app.get("/api/analytics/photos/upload-patterns",
+        #              response_model=PhotoUploadPatternsResponse,
+        #              tags=["Analytics"])
+        # async def get_photo_upload_patterns(
+        #     client_id: Optional[str] = None,
+        #     authenticated_client: str = Depends(self.verify_api_key)
+        # ):
+        #     """Get photo upload patterns and trends"""
+        #     data = self.db.get_photo_upload_patterns(client_id)
+        #     return PhotoUploadPatternsResponse(**data)
         
-        @self.app.get("/api/analytics/health/summary",
-                     response_model=SystemHealthResponse,
-                     tags=["System"])
-        async def get_system_health(
-            authenticated_client: str = Depends(self.verify_api_key)
-        ):
-            """Get overall system health and sync status"""
-            data = self.db.get_system_health()
-            return SystemHealthResponse(**data)
+        # @self.app.get("/api/analytics/health/summary",
+        #              response_model=SystemHealthResponse,
+        #              tags=["System"])
+        # async def get_system_health(
+        #     authenticated_client: str = Depends(self.verify_api_key)
+        # ):
+        #     """Get overall system health and sync status"""
+        #     data = self.db.get_system_health()
+        #     return SystemHealthResponse(**data)
         
-        # Authentication Management
-        @self.app.post("/api/auth/request-api-key",
-                      response_model=APIKeyResponse,
-                      tags=["Authentication"])
-        async def request_api_key(request: APIKeyRequest):
-            """Request a new API key for a client server"""
-            api_key = hashlib.sha256(f"{request.client_id}:{request.client_name}:{datetime.now()}".encode()).hexdigest()
+        # # Authentication Management
+        # @self.app.post("/api/auth/request-api-key",
+        #               response_model=APIKeyResponse,
+        #               tags=["Authentication"])
+        # async def request_api_key(request: APIKeyRequest):
+        #     """Request a new API key for a client server"""
+        #     api_key = hashlib.sha256(f"{request.client_id}:{request.client_name}:{datetime.now()}".encode()).hexdigest()
             
-            success = self.db.store_api_key(
-                request.client_id, 
-                request.client_name, 
-                request.contact_email, 
-                api_key
-            )
+        #     success = self.db.store_api_key(
+        #         request.client_id, 
+        #         request.client_name, 
+        #         request.contact_email, 
+        #         api_key
+        #     )
             
-            if not success:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to store API key"
-                )
+        #     if not success:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #             detail="Failed to store API key"
+        #         )
             
-            return APIKeyResponse(
-                api_key=api_key,
-                client_id=request.client_id,
-                expires_at=None,
-                permissions=["read:analytics", "read:health"]
-            )
+        #     return APIKeyResponse(
+        #         api_key=api_key,
+        #         client_id=request.client_id,
+        #         expires_at=None,
+        #         permissions=["read:analytics", "read:health"]
+        #     )
 
     def get_app(self) -> FastAPI:
         """Get the FastAPI application instance"""

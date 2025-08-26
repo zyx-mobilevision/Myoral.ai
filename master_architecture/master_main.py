@@ -17,7 +17,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
+import sys
 from dotenv import load_dotenv
+from pathlib import Path
+
+# Add the project root to Python path (one level up from master_architecture)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Also add the current directory
+sys.path.insert(0, str(Path(__file__).parent))
 
 # Load environment variables
 load_dotenv()

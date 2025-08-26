@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, HTTPException, status
 
-from ..services import ClientSyncService
+from master_architecture.services import ClientSyncService
 
 class ClientServerAPIDesign:
     """
