@@ -12,6 +12,22 @@ A secure, HIPAA-compliant master-client architecture for splitting the monolithi
 
 > **⚠️ DISCLAIMER**: While the core architecture is complete, a lot of functionality has not been thoroughly tested yet. Please conduct comprehensive testing before deploying to production environments.
 
+## **Run the server**
+Run the following command in terminal
+### **Master server**
+
+```uvicorn master_main:app --reload --host 0.0.0.0 --port [port_number]```
+
+
+### **(Client) Server**
+```uvicorn client_main:app --reload --host 0.0.0.0 --port [port_number]```
+
+Look for "INFO:     Uvicorn running on (URL) (Press CTRL+C to quit)"
+
+Click on the URL and open with browser.
+
+Add "/docs" to the end of the URL to use the FASTapi inbuilt testing interface
+
 ## ⚠️ **Incomplete Tasks & Known Limitations**
 
 ### **🔧 Implementation Gaps**

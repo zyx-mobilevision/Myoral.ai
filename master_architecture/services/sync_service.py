@@ -8,7 +8,7 @@ import threading
 from typing import Dict, Optional, List, Any
 from datetime import datetime
 from contextlib import asynccontextmanager
-from ..core.anonymization import DataAnonymizationStrategy
+from core.anonymization import DataAnonymizationStrategy
 from .robust_http_client import RobustHttpClient, RequestConfig, RetryConfig
 
 
