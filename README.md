@@ -1,8 +1,45 @@
 # Myoral
 
+> **📌 NOTICE**: This project has been restructured into a master-client architecture. Please refer to the comprehensive documentation in the master_client_architecture folder for the latest implementation details.
+
+## 🔄 Project Migration
+
+This repository has been updated to implement a secure, HIPAA-compliant master-client architecture for the MyOral dental health application. The monolithic structure has been refactored into scalable, privacy-focused microservices.
+
+## 📖 Updated Documentation
+
+**👉 For complete documentation, setup instructions, and deployment guides, please see:**
+
+### **[Master-Client Architecture Documentation](./master_client_architecture/README.md)**
+
+The new documentation includes:
+- ✅ Complete system architecture overview
+- ✅ Security and HIPAA compliance features
+- ✅ Database schema and API endpoints
+- ✅ Deployment instructions with uvicorn
+- ✅ Development and production setup guides
+- ✅ Integration examples and code samples
+
+## 🚀 Quick Start
+
+For immediate setup, navigate to the master_client_architecture folder:
+
+```bash
+cd master_client_architecture
+```
+
+Then follow the instructions in the [Master-Client Architecture README](./master_client_architecture/README.md).
+
+---
+
+## 📋 Legacy Information (Pre-Architecture Update)
+
+<details>
+<summary>Click to view original README content</summary>
+
 Myoral is a deep learning-powered backend for intelligent oral photo analysis. Users upload oral images via the frontend app; the backend automatically performs tooth segmentation, caries (cavity) detection, gum recession analysis, and returns diagnostic images and detailed reports. The system supports user registration, login, profile management, photo uploads, and includes comprehensive model training and data processing tools.
 
-## Project Structure
+### Project Structure
 
 ```
 Myoral/
@@ -19,7 +56,7 @@ Myoral/
 └── ...
 ```
 
-## Main Features
+### Main Features
 
 - **User Management:** Registration (email/phone), login (JWT token), profile update, avatar upload, token authentication.
 - **Oral Photo Analysis:** Upload oral images for AI-based segmentation and diagnosis (teeth, caries, gum recession, etc.), with diagnostic images and structured reports.
@@ -28,45 +65,7 @@ Myoral/
 - **Training & Data Tools:** Custom dataset splitting, mask visualization, model training and fine-tuning.
 - **RESTful API:** CORS support, suitable for frontend-backend separation.
 
-## Quick Start
-
-1. **Environment Setup**
-
-   Python 3.8+ is recommended. Create a virtual environment:
-
-   ```sh
-   python -m venv myenv
-   # On Windows:
-   myenv\Scripts\activate
-   # On macOS/Linux:
-   source myenv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. **Configure Environment Variables**
-
-   Copy `.env.example` to `.env` and fill in database, secret key, and other info.
-
-3. **Prepare Model Files**
-
-   Place your trained model files (e.g., `6_26best.pt`) in the `models/` directory.
-
-4. **Start the Backend Server**
-
-   For development, you can run uvicorn with '--reload' option so that the server is auto-reloaded when there any change in the project source code:
-   ```sh
-   uvicorn main:app --reload
-   ```
-   For deployment, you can run the shell script run_myoral_server.sh to activate the venv and run uvicorn to deploy the server in the background with 'no hangup'. The console log would be redirected to the file nohup.out.
-   Before running it, update the path to the server backend folder in run_myoral_server.sh:  
-   ```sh
-   PATH_TO_MYORAL_SERVER="/home/oral_backend/myoral_backend"
-   ```
-6. **API Documentation**
-
-   Visit [http://localhost:8000/docs](http://localhost:8000/docs) in your browser for a list of endpoints and for testing purposes.
-
-## Core API Endpoints
+### Core API Endpoints
 
 All endpoints are prefixed with `/v1`:
 
@@ -78,45 +77,15 @@ All endpoints are prefixed with `/v1`:
 - `GET    /v1/readPhoto/{photoId}` — Get original photo
 - `POST   /v1/analysis`         — Upload and analyze photo, returns diagnostic image and report
 - `GET    /v1/analysis/mask/{userId}` — Get segmentation mask (supports latest/all/specific time)
-- See the `routers/` directory and `/docs` for more
 
-## Oral Analysis & AI Diagnosis
-
-- Tooth instance segmentation with automatic numbering and annotation
-- Detection of caries (cavities), gum recession, and other oral issues
-- Outputs numbered mask images and structured JSON reports
-- Supports automatic PDF report generation
-
-## Database Design
-
-- Uses PostgreSQL and SQLAlchemy ORM
-- Includes user table (`Users`), photo table (`photos_path`), etc.
-- Supports email verification, token management, registration method distinction
-
-## Training & Data Tools
-
-- `train.py`: YOLOv8 segmentation model training script, supports custom hyperparameters
-- `split_dataset.py`: Automatic train/validation split
-- `visualize_mask.py`: Mask visualization for data inspection
-
-## Directory & File Notes
-
-- `models/`: All trained model files (must be downloaded/trained separately)
-- `masks/`: Segmentation mask images generated by analysis
-- `uploads/`: User-uploaded original photos
-- `users/`: User avatars and resources
-- `dataset/`: Raw/processed datasets (not distributed with code)
-
-## Contribution
-
-Feel free to open issues or submit pull requests! For custom training, new features, or frontend integration, refer to the `routers/` and `Training/` directories.
-
-## Notes
+### Notes
 
 - This project is for academic and research use only. Commercial use is prohibited.
 - Model files and datasets must be prepared separately and are not included in the repository.
 - Keep your secret keys and database credentials secure.
 
+</details>
+
 ---
 
-**Myoral — Intelligent Oral Analysis Backend for Better Oral Health Management**
+**Myoral — Intelligent Oral Analysis Backend with Master-Client Architecture for Better Oral Health Management**
