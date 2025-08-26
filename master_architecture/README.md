@@ -2,7 +2,7 @@
 
 A secure, HIPAA-compliant master-client architecture for splitting the monolithic MyOral dental health application into scalable, privacy-focused microservices.
 
-## � **Implementation Status: PRODUCTION READY**
+## **Implementation Status: PRODUCTION READY**
 
 **Architecture Type**: Master-Client Distributed System  
 **Security Level**: HIPAA Compliant  
