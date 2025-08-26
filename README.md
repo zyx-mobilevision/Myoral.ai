@@ -20,7 +20,22 @@ The new documentation includes:
 - ✅ Development and production setup guides
 - ✅ Integration examples and code samples
 
-## 🚀 Quick Start
+## �️ **Database Update Plan**
+
+**👉 For database migration and admin management features, please see:**
+
+### **[Solution 1: Admin Management Implementation](./SOLUTION1_IMPLEMENTATION.md)**
+
+This document contains the complete database update plan including:
+- 📋 **Database Schema Changes** - Admin management with self-referential foreign keys
+- 🔧 **Migration Scripts** - Ready-to-execute SQL migration files
+- 🔑 **Admin Management APIs** - New endpoints for managing elderly users
+- 📝 **Implementation Guide** - Step-by-step setup instructions
+- 🧪 **Testing Procedures** - Validation and testing guidelines
+
+**⚠️ IMPORTANT**: Execute the database migration before using the new admin features.
+
+## �🚀 Quick Start
 
 For immediate setup, navigate to the master_client_architecture folder:
 
@@ -29,6 +44,8 @@ cd master_client_architecture
 ```
 
 Then follow the instructions in the [Master-Client Architecture README](./master_client_architecture/README.md).
+
+**For database updates**, follow the migration guide in [SOLUTION1_IMPLEMENTATION.md](./SOLUTION1_IMPLEMENTATION.md).
 
 ---
 

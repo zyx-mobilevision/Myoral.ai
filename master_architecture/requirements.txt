@@ -1,0 +1,24 @@
+# Requirements for phase1_master_client_architecture
+fastapi>=0.68.0
+pydantic>=1.8.0
+uvicorn>=0.15.0
+pytest>=6.0.0
+
+# Database
+psycopg2-binary>=2.9.0
+python-dotenv>=0.19.0
+
+# Development utilities
+pathlib2>=2.3.7
+
+# Additional FastAPI dependencies
+python-multipart>=0.0.5
+aiofiles>=0.7.0
+
+# Testing
+faker>=15.0.0
+
+# Security
+bcrypt>=3.2.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
