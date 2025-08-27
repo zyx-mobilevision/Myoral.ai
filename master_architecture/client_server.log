@@ -1,0 +1,5 @@
+2025-08-26 07:55:31,156 - client_main - INFO - 🚀 Starting MyOral Client Server
+2025-08-26 07:55:31,157 - client_main - INFO - ✅ Client database initialized successfully
+2025-08-26 07:55:31,157 - client_main - INFO - ✅ Background sync started (interval: 30 minutes)
+2025-08-26 07:55:31,157 - client_main - WARNING - ⚠️  Missing environment variables: ['CLIENT_DB_HOST', 'CLIENT_DB_PORT', 'CLIENT_DB_NAME', 'CLIENT_DB_USER', 'CLIENT_DB_PASS', 'CLIENT_ID']
+2025-08-26 07:55:31,157 - client_main - INFO - 🟢 Client Server startup complete

@@ -7,6 +7,7 @@ Myoral is a deep learning-powered backend for intelligent oral photo analysis. U
 ```
 Myoral/
 ├── routers/           # FastAPI routes (user, analysis, upload, etc.)
+├───── helper_functions/  # Helper functions for charts, getting masks and PDF
 ├── models/            # Trained model files (not included)
 ├── Training/          # Training scripts, dataset splitting, mask visualization
 ├── masks/             # Generated segmentation masks
@@ -36,11 +37,19 @@ Myoral/
 
    ```sh
    python -m venv myenv
+   
    # On Windows:
-   myenv\Scripts\activate
+   myoral_venv\Scripts\activate
+
+   ################################
+   
    # On macOS/Linux:
-   source myenv/bin/activate
+   source myoral_venv/bin/activate
    pip install -r requirements.txt
+
+   # Another option (run in terminal)
+   ./run_myoral_server.sh # To start the server
+   ./stop_myoral_server.sh # To stop the server
    ```
 
 2. **Configure Environment Variables**
@@ -77,7 +86,7 @@ All endpoints are prefixed with `/v1`:
 - `POST   /v1/photoUpload`      — Upload oral photo
 - `GET    /v1/readPhoto/{photoId}` — Get original photo
 - `POST   /v1/analysis`         — Upload and analyze photo, returns diagnostic image and report
-- `GET    /v1/analysis/mask/{userId}` — Get segmentation mask (supports latest/all/specific time)
+- `GET    /v1/analysis/detectedFeatureImage/{userId}` — Get segmentation mask (supports latest/all/specific time)
 - See the `routers/` directory and `/docs` for more
 
 ## Oral Analysis & AI Diagnosis
