@@ -1,4 +1,4 @@
-# Myoral
+# MyOral.ai Backend Development  (Last update on 27/8/2025 11:30)
 
 Myoral is a deep learning-powered backend for intelligent oral photo analysis. Users upload oral images via the frontend app; the backend automatically performs tooth segmentation, caries (cavity) detection, gum recession analysis, and returns diagnostic images and detailed reports. The system supports user registration, login, profile management, photo uploads, and includes comprehensive model training and data processing tools.
 
@@ -6,18 +6,26 @@ Myoral is a deep learning-powered backend for intelligent oral photo analysis. U
 
 ```
 Myoral/
-├── routers/           # FastAPI routes (user, analysis, upload, etc.)
-├── models/            # Trained model files (not included)
-├── Training/          # Training scripts, dataset splitting, mask visualization
-├── masks/             # Generated segmentation masks
-├── uploads/           # Uploaded user images
-├── users/             # User avatars and resources
-├── dataset/           # Raw/processed datasets (not included)
-├── myenv/             # Python virtual environment
+├── routers/              # FastAPI routes (user, analysis, upload, etc.)
+├───── helper_functions/  # Helper functions for charts, getting masks and PDF
+├── models/               # Trained model files (not included)
+├── Training/             # Training scripts, dataset splitting, mask visualization
+├── masks/                # Generated segmentation masks
+├── uploads/              # Uploaded user images
+├── users/                # User avatars and resources
+├── dataset/              # Raw/processed datasets (not included)
+├── myoral_venv/          # Python virtual environment
+├── migrations/           # Database migration Plan
+├── master_architecture   # Python virtual environment
 ├── .gitignore
 ├── requirements.txt
 └── ...
 ```
+
+### **Related documentations 1:** [Schema Visualization and Future Plan](SCHEMA_ANALYSIS_AND_SOLUTIONS.md)
+### **Related documentations 2:** [Options for Admin-Elderly Relation Migration](ADMIN_MULTI_ACCOUNT_DESIGN.md)
+### **Related documentations 3:** [Intended Short-Term Migration Plan (One of the solutions in _Related Documentation 2_)](SOLUTION1_IMPLEMENTATION.md)
+
 
 ## Main Features
 
@@ -35,12 +43,20 @@ Myoral/
    Python 3.8+ is recommended. Create a virtual environment:
 
    ```sh
-   python -m venv myenv
+   python -m venv myoral_venv
+   
    # On Windows:
-   myenv\Scripts\activate
+   myoral_venv\Scripts\activate
+
+   ################################
+   
    # On macOS/Linux:
-   source myenv/bin/activate
+   source myoral_venv/bin/activate
    pip install -r requirements.txt
+
+   # Another option (run in terminal)
+   ./run_myoral_server.sh # To start the server
+   ./stop_myoral_server.sh # To stop the server
    ```
 
 2. **Configure Environment Variables**
@@ -61,6 +77,9 @@ Myoral/
    Before running it, update the path to the server backend folder in run_myoral_server.sh:  
    ```sh
    PATH_TO_MYORAL_SERVER="/home/oral_backend/myoral_backend"
+   
+   # Run the following command in terminal to start the server
+   ./run_myoral_server.sh
    ```
 6. **API Documentation**
 
@@ -77,7 +96,7 @@ All endpoints are prefixed with `/v1`:
 - `POST   /v1/photoUpload`      — Upload oral photo
 - `GET    /v1/readPhoto/{photoId}` — Get original photo
 - `POST   /v1/analysis`         — Upload and analyze photo, returns diagnostic image and report
-- `GET    /v1/analysis/mask/{userId}` — Get segmentation mask (supports latest/all/specific time)
+- `GET    /v1/analysis/detectedFeatureImage/{userId}` — Get segmentation mask (supports latest/all/specific time)
 - See the `routers/` directory and `/docs` for more
 
 ## Oral Analysis & AI Diagnosis
@@ -113,7 +132,6 @@ Feel free to open issues or submit pull requests! For custom training, new featu
 
 ## Notes
 
-- This project is for academic and research use only. Commercial use is prohibited.
 - Model files and datasets must be prepared separately and are not included in the repository.
 - Keep your secret keys and database credentials secure.
 
